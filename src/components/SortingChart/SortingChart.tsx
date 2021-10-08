@@ -3,8 +3,8 @@ import React from "react";
 import { Bar } from "react-chartjs-2";
 
 interface DatasetConfig {
-	size: number,
-	color?: [number, number, number]
+	size: number;
+	color?: [number, number, number];
 }
 
 const generate_dataset = (datasetparams: DatasetConfig): ChartData => {
@@ -17,14 +17,11 @@ const generate_dataset = (datasetparams: DatasetConfig): ChartData => {
 	}
 
 	let color: string;
-	if (datasetparams.color)
-	{
+	if (datasetparams.color) {
 		color = `${datasetparams.color[0]}, ${datasetparams.color[1]}, ${datasetparams.color[2]}`;
+	} else {
+		color = `76, 114, 176`;
 	}
-	else
-	{
-		color =  `76, 114, 176`;
-	}	
 
 	return {
 		labels: data_x,
@@ -41,12 +38,14 @@ const generate_dataset = (datasetparams: DatasetConfig): ChartData => {
 	};
 };
 
-let data = generate_dataset({size:50});
+let data = generate_dataset({ size: 25 });
 
 const options: ChartOptions = {
+	maintainAspectRatio: true,
+	aspectRatio: 1,
 	responsive: true,
 	layout: {
-		padding: 50,
+		
 	},
 	plugins: {
 		tooltip: {
@@ -64,17 +63,8 @@ const options: ChartOptions = {
 	},
 };
 
-const test_func = () => {
-	console.log("lol hello");
-};
-
 const VerticalBar = () => {
-	test_func();
-	return (
-		<>
-			<Bar data={data} options={options} />
-		</>
-	);
+	return <Bar data={data} options={options} />;
 };
 
 export default VerticalBar;

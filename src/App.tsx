@@ -1,6 +1,6 @@
 import React from 'react';
 
-import VerticalBar from './components/SortingChart/SortingChart';
+import { SortingChartContainer } from './components/SortingChart/SortingChartContainer';
 
 import logo from './logo.svg';
 import './App.css';
@@ -9,7 +9,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <VerticalBar/>
+        <SortingChartContainer/>
       </header>
     </div>
   );
