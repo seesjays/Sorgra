@@ -29,9 +29,6 @@ const generate_dataset = (datasetparams: DatasetConfig): ChartData => {
 		color = `76, 114, 176`;
 	}
 
-	console.dir(data_y);
-
-
 	return {
 		labels: data_x,
 		datasets: [
