@@ -1,5 +1,5 @@
 import { ChartOptions, ChartData } from "chart.js";
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Bar } from "react-chartjs-2";
 
 
@@ -70,7 +70,12 @@ const options: ChartOptions = {
 };
 
 const VerticalBar = () => {
-	return <Bar data={data}  options={options} />;
+	const ref = useRef();
+
+	setTimeout(() => {
+		console.log('ref :>> ', ref);
+	}, 5000);
+	return <Bar ref={ref} data={data}  options={options} />;
 };
 
 export default VerticalBar;

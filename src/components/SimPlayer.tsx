@@ -2,13 +2,38 @@ import React from "react";
 import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 
-function SimPlayer() {
-	return (
-		<>
-			<SortingChartContainer />
-			<SortingChartButtonRow />
-		</>
-	);
+export enum StartingMode {
+    Sorting,
+    Pathfinding
+}
+
+export enum Speed {
+    SLOW,
+    NORMAL,
+    FAST
+}
+
+type SimPlayerProps = {
+    startingmode: StartingMode,
+};
+
+type SimPlayerState = {
+    speed: Speed,
+}
+
+class SimPlayer extends React.Component<SimPlayerProps, SimPlayerState> {
+    state: SimPlayerState = {
+        speed: Speed.NORMAL
+    }
+
+    render() {
+        return (
+            <>
+                <SortingChartContainer />
+                <SortingChartButtonRow />
+            </>
+        );
+    }
 }
 
 export default SimPlayer;

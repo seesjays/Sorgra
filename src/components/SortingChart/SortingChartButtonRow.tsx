@@ -1,5 +1,7 @@
 import React from 'react'
 import styled from "styled-components"
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
 
 const ButtonSingular = styled.button`
     width: 45%;
@@ -8,7 +10,8 @@ const ButtonSingular = styled.button`
     border-radius: 5px;
     background: transparent;
     color: white;
-    padding: 3%;
+    padding: 1%;
+    font-size: 30px;
     margin: 3%;
 `;
 
@@ -25,8 +28,8 @@ const ButtonRow = styled.div`
 export const SortingChartButtonRow = () => { 
     return (
         <ButtonRow>
-            <ButtonSingular>Next Step</ButtonSingular>
-            <ButtonSingular>Play</ButtonSingular>
+            <ButtonSingular><SkipNextRoundedIcon/></ButtonSingular>
+            <ButtonSingular><PlayArrowRoundedIcon/></ButtonSingular>
         </ButtonRow>
     )
 }
