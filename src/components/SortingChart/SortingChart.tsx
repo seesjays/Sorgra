@@ -1,7 +1,6 @@
+import * as React from "react";
 import { ChartOptions, ChartData, Chart } from "chart.js";
-import React, { useState, useRef, MutableRefObject, ForwardRefExoticComponent, RefObject } from "react";
 import { Bar } from "react-chartjs-2";
-import { generate_dataset } from "../../scripts/dataset";
 
 const options: ChartOptions = {
 	maintainAspectRatio: true,
@@ -26,14 +25,28 @@ const options: ChartOptions = {
 		},
 	},
 };
-interface HighlightedSortChart {
+
+type HighlightedSortChart = {
 	name: string;
 	chartdata: ChartData;
-	indices: number[];
+	indices?: number[];
 }
 
-export const SortingChart: React.FC = () => {
-	const chartref = useRef<Chart>(null);
+interface SortingChartProps {
+	chartdatasets: HighlightedSortChart[]
+}
 
-	return <Bar ref={chartref} options={options} />;
+type DatasetCollection = {
+	[key: number]: HighlightedSortChart
+}
+export const SortingChart = ({ chartdatasets }: SortingChartProps) => {
+	let datasets: DatasetCollection = {}
+
+	let ind = 0;
+	for (let set of chartdatasets) {
+		datasets[ind] = set;
+		ind++;
+	}
+
+	return <Bar data={datasets} options={options} />;
 }

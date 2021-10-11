@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import SortingChart from "./SortingChart";
+import { SortingChart } from "./SortingChart";
+import { generate_dataset } from "../../scripts/dataset";
+
+
 
 const ContainerDiv = styled.div`
 	height: 95%;
@@ -9,10 +12,12 @@ const ContainerDiv = styled.div`
 	border: 2px solid grey;
 `;
 
+let data = generate_dataset({size:20});
+
 export const SortingChartContainer = () => {
 	return (
 		<ContainerDiv>
-			<SortingChart />
+			<SortingChart data={[{chartdata:data, name:"Default"}]}/>
 		</ContainerDiv>
 	);
 };
