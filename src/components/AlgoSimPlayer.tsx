@@ -21,7 +21,7 @@ type SimPlayerState = {
     speed: Speed,
 }
 
-class SimPlayer extends React.Component<SimPlayerProps, SimPlayerState> {
+class AlgoSimPlayer extends React.Component<SimPlayerProps, SimPlayerState> {
     state: SimPlayerState = {
         speed: Speed.NORMAL
     }
