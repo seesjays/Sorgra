@@ -1,12 +1,5 @@
 import { ChartData } from "chart.js";
 
-
-interface DatasetConfig {
-    size: number;
-    name: string;
-    color: [number, number, number];
-}
-
 class SortingDatasetModel {
     data_set_size: number;
     step_counter: number;
@@ -18,6 +11,7 @@ class SortingDatasetModel {
 
     algorithm_name: string;
 
+    chartjsdatasetobj: ChartData;
 
     constructor(init_algorithm: string)
     {
@@ -26,45 +20,49 @@ class SortingDatasetModel {
 
         this.data_x = Array.from({length: 10}, (_, i) => i + 1);
         this.data_original = [];
-        this.data_y = [];
+        this.data_y = this.generate_yvals();
 
         this.algorithm_name = init_algorithm;
+
+        this.chartjsdatasetobj = this.generate_base_chart_dataset();
     }
 
-    private getRandomIntInclusive(min: number, max: number): number {
+    private gen_random_int_inclusive(min: number, max: number): number {
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
     }
-    
-    
-    
-    private generate_dataset(datasetparams: DatasetConfig): ChartData {
-        let data_x: number[] = [];
-        let data_y: number[] = [];
-    
-        for (let i = 0; i < datasetparams.size; i++) {
-            data_x[i] = i;
-            data_y[i] = this.getRandomIntInclusive(1, datasetparams.size);
+
+    private generate_yvals(): number[]
+    {
+        let outarr: number[] = [];
+
+        for (let i = 0; i < this.data_set_size; i++) {
+            outarr.push(this.gen_random_int_inclusive(1, this.data_set_size+1));       
         }
-    
-        let color = `${datasetparams.color[0]}, ${datasetparams.color[1]}, ${datasetparams.color[2]}`;
-    
+
+        return outarr;
+    }
+
+    private generate_base_chart_dataset(): ChartData {    
         return {
-            labels: data_x,
+            labels: this.data_x,
             datasets: [
                 {
-                    label: "Datapoints",
-                    data: data_y,
-                    backgroundColor: [`rgba(${color}, 0.8)`],
-                    borderColor: [`rgba(${color}, 1)`],
+                    label: "Base",
+                    data: this.data_y,
+                    backgroundColor: `rgba(76, 114, 176, 0.8)`,
+                    borderColor: `rgba(76, 114, 176, 1)`,
                     borderWidth: 2,
                     barPercentage: 0.6,
                 },
             ],
         };
     };
-    
+
+    // append colored dataset with specific indicies actually containing values, rest are 0
+    // TODO
+
 }
 
 const mdl = new SortingDatasetModel("Quick Sort");
