@@ -36,4 +36,4 @@ class AlgoSimPlayer extends React.Component<SimPlayerProps, SimPlayerState> {
     }
 }
 
-export default SimPlayer;
+export default AlgoSimPlayer;
