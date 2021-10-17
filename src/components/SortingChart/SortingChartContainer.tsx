@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import SortingDatasetModel, { HIGHLIGHT_TYPE } from "../../scripts/dataset";
 import { ChartOptions, ChartData } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
+type SortingChartContainerProps = {
+	chart_data: ChartData;
+};
 
-const options: ChartOptions = {
+const chart_options: ChartOptions = {
 	maintainAspectRatio: true,
 	aspectRatio: 1,
 	animation: false,
@@ -32,20 +34,14 @@ const options: ChartOptions = {
 const ContainerDiv = styled.div`
 	height: 95%;
 	width: 95%;
-    position: relative;
+	position: relative;
 	border: 2px solid grey;
 `;
 
-const mdl = new SortingDatasetModel("Quick Sort");
-
-let new_data = mdl.generate_base_chart_dataset();
-
-new_data = mdl.highlight_dataset([{color: HIGHLIGHT_TYPE.SELECTED, indices: [0,mdl.data_set_size-1]}])
-
-export const SortingChartContainer = () => {
+export const SortingChartContainer = (chartdata: SortingChartContainerProps) => {
 	return (
 		<ContainerDiv>
-			<Bar data={new_data} options={options} />
+			<Bar data={chartdata.chart_data} options={chart_options}/>
 		</ContainerDiv>
 	);
 };
