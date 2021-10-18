@@ -14,6 +14,18 @@ export type HighlightedIndex = {
     indices: number[];
 }
 
+export type SortStep = {
+    highlights: HighlightedIndex[];
+    message: number;
+    dataset: number[];
+}
+
+export interface SortingOperation {
+    name: string;
+    steps: SortStep[];
+    messages?: string[];
+}
+
 export class SortingDatasetModel {
     data_set_size: number;
     step_counter: number;
@@ -29,6 +41,7 @@ export class SortingDatasetModel {
 
 
     algorithm_name: string;
+
 
 
     constructor(init_algorithm: string) {
@@ -60,13 +73,66 @@ export class SortingDatasetModel {
         return outarr;
     }
 
+    private return_to_original(): void {
+        this.data_y = this.data_original;
+    }
+
+    public generate_bubblesort_steps(): SortingOperation {
+        let sort_steps: SortStep[] = [];
+        const messages = ["Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values."]
+
+        let clear = false;
+
+        while (!clear) {
+            clear = true;
+            for (let i = 0; i < this.data_set_size - 1; i++) {
+                if (this.data_y[i] > this.data_y[i + 1]) {
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }], message: 1, dataset: [...this.data_y] });
+                    let temp = this.data_y[i + 1];
+                    this.data_y[i + 1] = this.data_y[i];
+                    this.data_y[i] = temp;
+                    clear = false;
+
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }], message: 2, dataset: [...this.data_y] });
+                }
+                else {
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }], message: 0, dataset: [...this.data_y] });
+                }
+            }
+        }
+
+        this.return_to_original();
+        return { name: "Bubble Sort", steps: sort_steps, messages: messages };
+    }
+
+
+}
+
+export class SortingOperationController {
+    private operation: SortingOperation;
+    private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(204, 185, 116)"];
+    private data_highlights: string[]; // Highlight diffing
+    public step_counter: number;
+
+    private data_x: number[];
+
+    constructor(operation: SortingOperation) {
+        this.operation = operation;
+        
+        this.data_highlights = new Array(this.operation.steps[0].dataset.length).fill(this.highlight_cols[0]);
+
+        this.step_counter = 0;
+
+        this.data_x = Array.from({ length: this.operation.steps[0].dataset.length }, (_, i) => i + 1);
+    }
+
     public get_chart_dataset(): ChartData {
         return {
             labels: this.data_x,
             datasets: [
                 {
                     label: "BASE",
-                    data: this.data_y,
+                    data: this.operation.steps[this.step_counter].dataset,
                     backgroundColor: this.data_highlights,
                     borderWidth: 2,
                     barPercentage: 0.9,
@@ -75,9 +141,8 @@ export class SortingDatasetModel {
         };
     };
 
-
-    public highlight_dataset(highlights: HighlightedIndex[]): ChartData {
-        for (let highlight of highlights) {
+    private highlight_dataset_step(sortingstep: SortStep): ChartData {
+        for (let highlight of sortingstep.highlights) {
             let selected_color = this.highlight_cols[highlight.color];
             for (let indice of highlight.indices) {
                 this.data_highlights[indice] = selected_color;
@@ -86,4 +151,18 @@ export class SortingDatasetModel {
 
         return this.get_chart_dataset();
     }
+    
+    public next_step(): ChartData {
+        
+        this.step_counter += 1;
+        this.highlight_dataset_step(this.operation.steps[this.step_counter]);
+        return this.get_chart_dataset();
+    }
+    
+    public prev_step(): ChartData {
+        this.step_counter -= 1;
+        this.highlight_dataset_step(this.operation.steps[this.step_counter]);
+        return this.get_chart_dataset();
+    }
+
 }
