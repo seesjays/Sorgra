@@ -68,13 +68,19 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 		const runtime = initial_set.datasets.length;
 
+		let bubbleSort = setInterval(() => {
+			if (steps_model.complete)
+			{
+				console.log("Bubblesort Complete");
+				
+				clearInterval(bubbleSort);
+			}
 
-
-
-
+			setStep(steps_model?.next_step());
+		}, 500)
 
 		return;
-	});
+	}, [steps_model]);
 
 	return (
 		<>
