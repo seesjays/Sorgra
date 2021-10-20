@@ -12,9 +12,9 @@ import {
 import { ChartData } from "chart.js";
 
 export enum Speed {
-	SLOW,
-	NORMAL,
-	FAST,
+	SLOW = 6000,
+	NORMAL = 3000,
+	FAST = 200,
 }
 
 type SimPlayerProps = {
@@ -22,28 +22,13 @@ type SimPlayerProps = {
 };
 
 
-/*
-let highlights: HighlightedIndex[] = [
-	{ color: HIGHLIGHT_TYPE.SELECTED, indices: [0, mdl.data_set_size - 1] },
-	{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [1, 5] },
-	{ color: HIGHLIGHT_TYPE.SEEKING, indices: [7, 8, 9, 10, 11] },
-	{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [15] },
-];
-
-let mdl = new SortingDatasetModel("Bubble Sort");
-let data_out = mdl.highlight_dataset(highlights);
-*/
-
-
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg)); 
 
-	const [speed, set_speed] = React.useState<Speed>(Speed.NORMAL);
-
-	let bubble = dataset_model.current.generate_bubblesort_steps();
+	const [speed, set_speed] = React.useState<Speed>(Speed.FAST);
 	
 	const [steps_model, set_steps_model] = React.useState<SortingOperationController>(
-		new SortingOperationController(bubble)
+		new SortingOperationController(dataset_model.current.generate_bubblesort_steps())
 	);
 
 	const [step, setStep] = React.useState<ChartData>({
@@ -66,8 +51,6 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			setStep(initial_set);
 		}
 
-		const runtime = initial_set.datasets.length;
-
 		let bubbleSort = setInterval(() => {
 			if (steps_model.complete)
 			{
@@ -77,7 +60,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			}
 
 			setStep(steps_model?.next_step());
-		}, 500)
+		}, speed)
 
 		return;
 	}, [steps_model]);

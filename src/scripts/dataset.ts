@@ -49,7 +49,7 @@ export class SortingDatasetModel {
         this.data_set_size = 10;
         this.step_counter = 0;
 
-        this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i + 1);
+        this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
 
@@ -80,7 +80,7 @@ export class SortingDatasetModel {
 
     public generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
-        const messages = ["Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values."]
+        const messages = ["Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Complete"];
 
         let clear = false;
 
@@ -108,6 +108,8 @@ export class SortingDatasetModel {
                 }
             }
         }
+
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: 3, });
 
         this.return_to_original();
         return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
