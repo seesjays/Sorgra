@@ -21,15 +21,17 @@ type SimPlayerProps = {
 	starting_alg: string;
 };
 
-
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
-	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg)); 
+	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg));
 
 	const [speed, set_speed] = React.useState<Speed>(Speed.FAST);
-	
-	const [steps_model, set_steps_model] = React.useState<SortingOperationController>(
-		new SortingOperationController(dataset_model.current.generate_bubblesort_steps())
-	);
+
+	const [steps_model, set_steps_model] =
+		React.useState<SortingOperationController>(
+			new SortingOperationController(
+				dataset_model.current.generate_bubblesort_steps()
+			)
+		);
 
 	const [step, setStep] = React.useState<ChartData>({
 		labels: [0, 1, 2, 3],
@@ -44,23 +46,33 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		],
 	});
 
-	React.useEffect(() => { 
+	React.useEffect(() => {
 		let initial_set = steps_model?.get_chart_dataset();
 
 		if (initial_set) {
 			setStep(initial_set);
 		}
 
-		let bubbleSort = setInterval(() => {
-			if (steps_model.complete)
-			{
+		var start = new Date().getTime(),
+			time = 0;
+
+
+		function instance() {
+			time += 200;
+
+			var diff = new Date().getTime() - start - time;
+			timer_instance = setTimeout(instance, 200 - diff);
+
+			if (steps_model.complete) {
 				console.log("Bubblesort Complete");
-				
-				clearInterval(bubbleSort);
+
+				clearTimeout(timer_instance);
 			}
 
 			setStep(steps_model?.next_step());
-		}, speed)
+		}
+
+		let timer_instance = setTimeout(instance, 200);
 
 		return;
 	}, [steps_model]);

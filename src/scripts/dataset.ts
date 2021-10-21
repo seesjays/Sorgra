@@ -46,7 +46,7 @@ export class SortingDatasetModel {
 
 
     constructor(init_algorithm: string) {
-        this.data_set_size = 10;
+        this.data_set_size = 20;
         this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
@@ -86,11 +86,9 @@ export class SortingDatasetModel {
 
         while (!clear) {
             clear = true;
-            for (let i = 0; i < this.data_set_size - 1; i++) {
-                sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 0 });
-                
+            for (let i = 0; i < this.data_set_size - 1; i++) {                
                 if (this.data_y[i] > this.data_y[i + 1]) {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }], message: 1 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 1 });
 
                     let temp = this.data_y[i + 1];
                     this.data_y[i + 1] = this.data_y[i];
@@ -102,9 +100,10 @@ export class SortingDatasetModel {
 
                     clear = false;
 
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }], message: 2, changes: [replace_higher_with_lower, restore_higher_from_temp] });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 2, changes: [replace_higher_with_lower, restore_higher_from_temp] });
                 }
                 else {
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 0 });
                 }
             }
         }
