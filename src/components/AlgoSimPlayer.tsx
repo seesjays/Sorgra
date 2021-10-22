@@ -1,19 +1,16 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 
 import {
 	SortingDatasetModel,
-	HighlightedIndex,
-	HIGHLIGHT_TYPE,
-	SortingOperation,
 	SortingOperationController,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
 
-export enum Speed {
-	SLOW = 6000,
-	NORMAL = 3000,
+enum Speed {
+	SLOW = 2000,
+	NORMAL = 1000,
 	FAST = 200,
 }
 
@@ -23,8 +20,6 @@ type SimPlayerProps = {
 
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg));
-
-	const [speed, set_speed] = React.useState<Speed>(Speed.FAST);
 
 	const [steps_model, set_steps_model] =
 		React.useState<SortingOperationController>(
@@ -45,6 +40,12 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			},
 		],
 	});
+	
+	const [speed, set_speed] = React.useState<Speed>(Speed.NORMAL);
+
+	let next_step = useCallback((): void => {
+		setStep(steps_model?.next_step());
+	}, [steps_model]);
 
 	React.useEffect(() => {
 		let initial_set = steps_model?.get_chart_dataset();
@@ -56,31 +57,32 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		var start = new Date().getTime(),
 			time = 0;
 
-
 		function instance() {
-			time += 200;
+			time += speed;
 
 			var diff = new Date().getTime() - start - time;
-			timer_instance = setTimeout(instance, 200 - diff);
+			timer_instance = setTimeout(instance, speed - diff);
 
 			if (steps_model.complete) {
-				console.log("Bubblesort Complete");
+				console.log(`${dataset_model.current.algorithm_name} Complete`);
 
 				clearTimeout(timer_instance);
 			}
 
-			setStep(steps_model?.next_step());
+			next_step();
 		}
 
-		let timer_instance = setTimeout(instance, 200);
+		let timer_instance: NodeJS.Timeout; 
+		// timer_instance = setTimeout(instance, speed);
 
 		return;
-	}, [steps_model]);
+	}, [speed, next_step, steps_model]);
 
+	
 	return (
 		<>
 			<SortingChartContainer chart_data={step} />
-			<SortingChartButtonRow />
+			<SortingChartButtonRow next_step={next_step}/>
 		</>
 	);
 };

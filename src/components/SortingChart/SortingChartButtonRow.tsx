@@ -1,7 +1,9 @@
 import React from 'react'
-import styled from "styled-components"
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
+import { jsx, css } from '@emotion/react';
+import styled from '@emotion/styled';
+
 
 const ButtonSingular = styled.button`
     width: 45%;
@@ -25,10 +27,18 @@ const ButtonRow = styled.div`
     align-items: stretch;
 `;
 
-export const SortingChartButtonRow = () => { 
+const anotherStyle = css({
+    textDecoration: 'underline'
+  })
+
+type SortingChartButtonRowProps = {
+	next_step(): void;
+};
+
+export const SortingChartButtonRow = (props: SortingChartButtonRowProps) => { 
     return (
         <ButtonRow>
-            <ButtonSingular><SkipNextRoundedIcon/></ButtonSingular>
+            <ButtonSingular onClick={props.next_step}><SkipNextRoundedIcon/></ButtonSingular>
             <ButtonSingular><PlayArrowRoundedIcon/></ButtonSingular>
         </ButtonRow>
     )

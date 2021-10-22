@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import styled from "styled-components";
 import { ChartOptions, ChartData } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import styled from '@emotion/styled';
+
 
 type SortingChartContainerProps = {
 	chart_data: ChartData;

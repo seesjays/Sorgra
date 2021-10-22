@@ -1,7 +1,7 @@
 import { ChartData } from "chart.js";
 
 
-export enum HIGHLIGHT_TYPE {
+enum HIGHLIGHT_TYPE {
     BASE,
     DISCREPANCY,
     CORRECTED,
@@ -9,18 +9,18 @@ export enum HIGHLIGHT_TYPE {
     SELECTED,
 }
 
-export type HighlightedIndex = {
+type HighlightedIndex = {
     color: HIGHLIGHT_TYPE;
     indices: number[];
 }
 
-export type SortStep = {
+type SortStep = {
     highlights: HighlightedIndex[];
     message: number;
     changes?: [number, number][];
 }
 
-export interface SortingOperation {
+interface SortingOperation {
     name: string;
     steps: SortStep[];
     data_y: number[];
@@ -46,7 +46,7 @@ export class SortingDatasetModel {
 
 
     constructor(init_algorithm: string) {
-        this.data_set_size = 20;
+        this.data_set_size = 15;
         this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
