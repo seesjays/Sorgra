@@ -37,6 +37,7 @@ const ContainerDiv = styled.div`
 	width: 95%;
 	position: relative;
 	border: 2px solid grey;
+	margin-top: 1rem;
 `;
 
 export const SortingChartContainer = (chartdata: SortingChartContainerProps) => {
