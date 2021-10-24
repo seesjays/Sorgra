@@ -2,9 +2,11 @@ import React from "react";
 import "./App.css";
 import AlgoSimPlayer from "./components/AlgoSimPlayer";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { Container, CssBaseline, styled } from "@mui/material";
 
 const theme = createTheme({
 	palette: {
+		mode: "dark",
 		primary: {
 			light: "#4c72b0",
 			main: "#7ea0e2",
@@ -20,14 +22,12 @@ const theme = createTheme({
 	},
 });
 
+
 function App() {
 	return (
 		<ThemeProvider theme={theme}>
-			<div className="App">
-				<div className="background-container">
-					<AlgoSimPlayer starting_alg="Bubble Sort" />
-				</div>
-			</div>
+			<CssBaseline />
+			<AlgoSimPlayer starting_alg="Bubble Sort" />
 		</ThemeProvider>
 	);
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { jsx, css } from "@emotion/react";
-import { styled } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 
 import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
@@ -12,7 +12,12 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 type SortingChartButtonRowProps = {
+	runstate: boolean;
 	next_step(): void;
+	handle_toggle_run(
+		event: React.MouseEvent<HTMLElement>,
+		newAlignment: boolean,
+	): void;
 };
 
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
@@ -32,50 +37,42 @@ const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
 }));
 
 const ToggleContainer = styled("div")(({ theme }) => ({
-	width: "80%",
-  display: "flex",
-  justifyContent: "center",
+	width: "fit-content",
+	display: "flex",
+	justifyContent: "center",
 }));
 
 export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
-	const [alignment, setAlignment] = React.useState("left");
-	const [formats, setFormats] = React.useState(() => ["italic"]);
+	const [selected_nextstep, deselect_nextstep] = React.useState(false);
 
-	const handleFormat = (
+	const handle_next_step = (
 		event: React.MouseEvent<HTMLElement>,
-		newFormats: string[]
 	) => {
-		setFormats(newFormats);
-	};
-
-	const handleAlignment = (
-		event: React.MouseEvent<HTMLElement>,
-		newAlignment: string
-	) => {
-		setAlignment(newAlignment);
+		props.next_step();
+		deselect_nextstep(false);
 	};
 
 	return (
 		<ToggleContainer>
 			<Paper
-				elevation={5}
+				elevation={3}
 				sx={{
 					display: "flex",
-					border: (theme) => `2px solid ${theme.palette.divider}`,
+					border: (theme) => `2px solid ${theme.palette.primary.light}`,
 					flexWrap: "wrap",
-					marginTop: "1rem",
-          width: "fit-content",
-          height: "fit-content",
-          justifyContent: "center", 
+					marginTop: "0.5rem",
+					width: "100%",
+					height: "fit-content",
+					justifyContent: "center",
 				}}
 			>
 				<StyledToggleButtonGroup
-					size="small"
-					value={formats}
-					onChange={handleFormat}
+					size="medium"
+					value={false}
+					onChange={handle_next_step}
 					aria-label="text formatting"
 				>
-					<ToggleButton value="bold" aria-label="bold">
+					<ToggleButton value="next" selected={selected_nextstep} aria-label="next step">
 						<SkipNextRoundedIcon />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
@@ -83,16 +80,16 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 				<Divider flexItem orientation="vertical" sx={{ mx: 0.5, my: 1 }} />
 
 				<StyledToggleButtonGroup
-					size="small"
-					value={alignment}
+					size="medium"
+					value={props.runstate}
 					exclusive
-					onChange={handleAlignment}
+					onChange={props.handle_toggle_run}
 					aria-label="text alignment"
 				>
-					<ToggleButton value="left" aria-label="left aligned">
+					<ToggleButton value={true} aria-label="play simulation">
 						<PlayArrowRoundedIcon color="success" />
 					</ToggleButton>
-					<ToggleButton value="right" aria-label="right aligned">
+					<ToggleButton value={false} aria-label="pause simulation">
 						<PauseRoundedIcon color="info" />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
@@ -100,14 +97,3 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 		</ToggleContainer>
 	);
 }
-
-/*
-const _SortingChartButtonRow = (props: SortingChartButtonRowProps) => { 
-    return (
-        <ButtonRow>
-            <ButtonSingular onClick={props.next_step}><SkipNextRoundedIcon/></ButtonSingular>
-            <ButtonSingular><PlayArrowRoundedIcon/></ButtonSingular>
-        </ButtonRow>
-    )
-}
-*/

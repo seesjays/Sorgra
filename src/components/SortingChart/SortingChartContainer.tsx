@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ChartOptions, ChartData } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import styled from '@emotion/styled';
-
+import Paper from "@mui/material/Paper";
+import { styled } from "@mui/material/styles";
 
 type SortingChartContainerProps = {
 	chart_data: ChartData;
@@ -32,18 +32,24 @@ const chart_options: ChartOptions = {
 	},
 };
 
-const ContainerDiv = styled.div`
-	height: 95%;
-	width: 95%;
-	position: relative;
-	border: 2px solid grey;
-	margin-top: 1rem;
-`;
+const ContainerPaper = styled(Paper)(({ theme }) => ({
+	height: "85%",
+	width: "85%",
+	position: "relative",
+}));
 
-export const SortingChartContainer = (chartdata: SortingChartContainerProps) => {
+export const SortingChartContainer = (
+	chartdata: SortingChartContainerProps
+) => {
 	return (
-		<ContainerDiv>
-			<Bar data={chartdata.chart_data} options={chart_options}/>
-		</ContainerDiv>
+		<ContainerPaper
+			elevation={2}
+			sx={{
+				border: (theme) => `2px solid ${theme.palette.primary.light}`,
+				marginTop: "0.5rem",
+			}}
+		>
+			<Bar data={chartdata.chart_data} options={chart_options} />
+		</ContainerPaper>
 	);
 };

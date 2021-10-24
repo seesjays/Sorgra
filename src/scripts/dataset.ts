@@ -84,11 +84,13 @@ export class SortingDatasetModel {
 
         let clear = false;
 
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [0, 1] }], message: 0 });
+
         while (!clear) {
             clear = true;
-            for (let i = 0; i < this.data_set_size - 1; i++) {                
+            for (let i = 0; i < this.data_set_size - 1; i++) {
                 if (this.data_y[i] > this.data_y[i + 1]) {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 1 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 1 });
 
                     let temp = this.data_y[i + 1];
                     this.data_y[i + 1] = this.data_y[i];
@@ -100,10 +102,10 @@ export class SortingDatasetModel {
 
                     clear = false;
 
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 2, changes: [replace_higher_with_lower, restore_higher_from_temp] });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 2, changes: [replace_higher_with_lower, restore_higher_from_temp] });
                 }
                 else {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i+1)) }], message: 0 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 0 });
                 }
             }
         }
@@ -173,13 +175,13 @@ export class SortingOperationController {
     }
 
     public next_step(): ChartData {
-        if (this.step_counter === this.operation.steps.length-1) {
+        if (this.step_counter === this.operation.steps.length - 1) {
             this.complete = true;
             return this.get_chart_dataset();
         }
 
         if (!this.complete) {
-            this.step_counter += 1;   
+            this.step_counter += 1;
             this.highlight_dataset_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
         }
