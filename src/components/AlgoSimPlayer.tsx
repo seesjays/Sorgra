@@ -58,40 +58,56 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 	const [speed, set_speed] = React.useState<Speed>(Speed.FASTEST);
 
-	// for the nextstep button
-	let next_step_indiv = useCallback((): void => {
-		setStep(steps_model?.next_step());
-	}, [steps_model]);
+	const next_step = useCallback(
+		(user_invoked: boolean): void => {
+			if (complete) {
+				console.log(`${dataset_model.current.algorithm_name} Complete`);
 
-	let next_step = useCallback((): void => {
-		if (steps_model.complete && timer_instance.current === null) {
-			console.log(`${dataset_model.current.algorithm_name} Complete`);
-			clearTimeout(timer_instance.current);
-			toggle_complete(true);
-			return;
-		} else if (timer_instance.current === undefined) {
-			console.log(`${dataset_model.current.algorithm_name} Paused`);
-			clearTimeout(timer_instance.current);
-			return;
-		}
-		setStep(steps_model?.next_step());
-	}, [steps_model]);
+				toggle_run(false);
+				return;
+			}
 
-	let timeordealone = React.useCallback(() => {
+			setStep(steps_model?.next_step());
+			if (steps_model.complete) {
+				console.log(`${dataset_model.current.algorithm_name} Complete`);
+
+				toggle_complete(true);
+			}
+		},
+		[complete, steps_model]
+	);
+
+	const timeordealone = React.useCallback(() => {
 		let ivl = speed; // ms
 		let exd = Date.now() + ivl;
 		timer_instance.current = setTimeout(step, ivl, ivl, exd);
 		function step(interval: number, initexpect: number) {
+			if (complete || steps_model.complete) {
+				console.log(`${dataset_model.current.algorithm_name} Complete`);
+
+				toggle_complete(true);
+				toggle_run(false);
+				return;
+			} else if (!running) {
+				console.log(`${dataset_model.current.algorithm_name} Paused`);
+
+				clearTimeout(timer_instance.current);
+				toggle_run(false);
+				return;
+			}
+
 			let dt = Date.now() - initexpect; // the drift (positive for overshooting)
 			if (dt > interval) {
 				// pause
 				console.log("timer miss");
-				clearInterval(timer_instance.current);
-				toggle_run(false);
-				return;
+				//clearInterval(timer_instance.current);
+				//toggle_run(false);
+				next_step(false);
+
+				///return;
 			} else {
 				//console.log("timer ping");
-				next_step();
+				next_step(false);
 			}
 			//console.log("delta: " + dt);
 			//console.log("diff: " + Math.max(0, interval - dt));
@@ -104,16 +120,18 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 				initexpect
 			);
 		}
-	}, [next_step, speed]);
+	}, [complete, next_step, running, speed, steps_model.complete]);
 
-	let handle_toggle_run = useCallback(
+	const handle_toggle_run = useCallback(
 		(event: React.MouseEvent<HTMLElement>, run_state: boolean): void => {
+			// enforce one selected
 			if (run_state !== null) {
-				if (run_state === running)
-				{
+				if (run_state === running) {
 					return;
 				}
+
 				toggle_run(run_state);
+
 				if (run_state) {
 					timeordealone();
 				} else {
@@ -147,7 +165,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			</Grid>
 			<Grid container justifyContent="center" item xs={12} md={4} key={1}>
 				<SortingChartButtonRow
-					next_step={next_step_indiv}
+					next_step={next_step}
 					handle_toggle_run={handle_toggle_run}
 					runstate={running}
 				/>

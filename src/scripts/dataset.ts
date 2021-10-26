@@ -46,7 +46,7 @@ export class SortingDatasetModel {
 
 
     constructor(init_algorithm: string) {
-        this.data_set_size = 15;
+        this.data_set_size = 5;
         this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);

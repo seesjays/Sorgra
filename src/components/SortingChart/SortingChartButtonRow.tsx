@@ -13,7 +13,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 type SortingChartButtonRowProps = {
 	runstate: boolean;
-	next_step(): void;
+	next_step(user_invoked: boolean): void;
 	handle_toggle_run(
 		event: React.MouseEvent<HTMLElement>,
 		newAlignment: boolean,
@@ -48,7 +48,7 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 	const handle_next_step = (
 		event: React.MouseEvent<HTMLElement>,
 	) => {
-		props.next_step();
+		props.next_step(true);
 		deselect_nextstep(false);
 	};
 
