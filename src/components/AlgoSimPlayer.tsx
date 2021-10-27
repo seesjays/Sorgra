@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 
@@ -29,7 +29,8 @@ const TallGrid = styled(Grid)(({ theme }) => ({
 }));
 
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
-	// refactor to use fewer stae hooks, i feel as though a couple of these are unnecessary
+	// try to update the timer system to be more stateful/actually follow React paradigms in the future
+
 	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg));
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
@@ -58,19 +59,15 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 	const [speed, set_speed] = React.useState<Speed>(Speed.FASTEST);
 
-	const next_step = useCallback(
+	const next_step = React.useCallback(
 		(user_invoked: boolean): void => {
 			if (complete) {
-				console.log(`${dataset_model.current.algorithm_name} Complete`);
-
 				toggle_run(false);
 				return;
 			}
 
 			setStep(steps_model?.next_step());
 			if (steps_model.complete) {
-				console.log(`${dataset_model.current.algorithm_name} Complete`);
-
 				toggle_complete(true);
 			}
 		},
@@ -78,28 +75,29 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	);
 
 	const timeordealone = React.useCallback(() => {
+		if (complete || steps_model.complete) {
+			console.log(`${dataset_model.current.algorithm_name} Complete`);
+
+			clearTimeout(timer_instance.current);
+			toggle_complete(true);
+			toggle_run(false);
+			return;
+		} else if (!running) {
+			console.log(`${dataset_model.current.algorithm_name} Paused`);
+
+			clearTimeout(timer_instance.current);
+			toggle_run(false);
+			return;
+		}
+
 		let ivl = speed; // ms
 		let exd = Date.now() + ivl;
 		timer_instance.current = setTimeout(step, ivl, ivl, exd);
 		function step(interval: number, initexpect: number) {
-			if (complete || steps_model.complete) {
-				console.log(`${dataset_model.current.algorithm_name} Complete`);
-
-				toggle_complete(true);
-				toggle_run(false);
-				return;
-			} else if (!running) {
-				console.log(`${dataset_model.current.algorithm_name} Paused`);
-
-				clearTimeout(timer_instance.current);
-				toggle_run(false);
-				return;
-			}
-
 			let dt = Date.now() - initexpect; // the drift (positive for overshooting)
 			if (dt > interval) {
 				// pause
-				console.log("timer miss");
+				// console.log("timer miss");
 				//clearInterval(timer_instance.current);
 				//toggle_run(false);
 				next_step(false);
@@ -122,7 +120,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		}
 	}, [complete, next_step, running, speed, steps_model.complete]);
 
-	const handle_toggle_run = useCallback(
+	const handle_toggle_run = React.useCallback(
 		(event: React.MouseEvent<HTMLElement>, run_state: boolean): void => {
 			// enforce one selected
 			if (run_state !== null) {
@@ -131,16 +129,36 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 				}
 
 				toggle_run(run_state);
-
-				if (run_state) {
-					timeordealone();
-				} else {
-					clearTimeout(timer_instance.current);
-				}
 			}
 		},
-		[running, timeordealone]
+		[running]
 	);
+
+	const retry_sim = React.useCallback((): void => {
+		setStep(steps_model.retry());
+		toggle_run(false);
+		toggle_complete(false);
+		
+	}, [steps_model]);
+
+	const randomize_sim = React.useCallback((): void => {
+		toggle_run(false);
+		toggle_complete(false);
+		
+		dataset_model.current.randomize_y();
+		let new_step_model = dataset_model.current.generate_bubblesort_steps();
+
+		let new_step_controller = new SortingOperationController(new_step_model); 
+		set_steps_model(new_step_controller);
+
+		let new_set = new_step_controller?.get_chart_dataset();
+
+		if (new_set) {
+			setStep(new_set);
+		}
+
+		
+	}, []);
 
 	React.useEffect(() => {
 		let initial_set = steps_model?.get_chart_dataset();
@@ -148,9 +166,15 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		if (initial_set) {
 			setStep(initial_set);
 		}
-
-		return;
 	}, [steps_model]);
+
+	React.useEffect(() => {
+		if (running) {
+			timeordealone();
+		} else {
+			clearTimeout(timer_instance.current);
+		}
+	}, [running, timeordealone]);
 
 	return (
 		<TallGrid
@@ -165,8 +189,10 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			</Grid>
 			<Grid container justifyContent="center" item xs={12} md={4} key={1}>
 				<SortingChartButtonRow
+					retry={retry_sim}
+					randomize={randomize_sim}
 					next_step={next_step}
-					handle_toggle_run={handle_toggle_run}
+					toggle_run={handle_toggle_run}
 					runstate={running}
 				/>
 			</Grid>

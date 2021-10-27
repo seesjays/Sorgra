@@ -116,6 +116,11 @@ export class SortingDatasetModel {
         return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
+    public randomize_y(): void {
+        this.data_y = this.generate_yvals();
+        this.data_original = [...this.data_y];
+    }
+
 
 }
 
@@ -126,6 +131,7 @@ export class SortingOperationController {
     public step_counter: number;
 
     private data_x: number[];
+    private data_y_original: number[];
 
     public complete: boolean = false;
 
@@ -137,6 +143,7 @@ export class SortingOperationController {
 
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.data_x = Array.from({ length: this.operation.data_y.length }, (_, i) => i + 1);
+        this.data_y_original = [...operation.data_y];
     }
 
     public get_chart_dataset(): ChartData {
@@ -185,6 +192,16 @@ export class SortingOperationController {
             this.highlight_dataset_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
         }
+
+        return this.get_chart_dataset();
+    }
+
+    public retry(): ChartData {
+        this.complete = false;
+        this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
+        this.step_counter = 0;
+        this.operation.data_y = [...this.data_y_original];
+
 
         return this.get_chart_dataset();
     }

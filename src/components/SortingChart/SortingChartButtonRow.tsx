@@ -2,6 +2,9 @@ import React from "react";
 import { jsx, css } from "@emotion/react";
 import { styled, useTheme } from "@mui/material/styles";
 
+import CasinoIcon from "@mui/icons-material/Casino";
+import ReplayIcon from "@mui/icons-material/Replay";
+
 import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
@@ -13,10 +16,12 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 type SortingChartButtonRowProps = {
 	runstate: boolean;
+	retry(): void;
+	randomize(): void;
 	next_step(user_invoked: boolean): void;
-	handle_toggle_run(
+	toggle_run(
 		event: React.MouseEvent<HTMLElement>,
-		newAlignment: boolean,
+		newAlignment: boolean
 	): void;
 };
 
@@ -43,15 +48,6 @@ const ToggleContainer = styled("div")(({ theme }) => ({
 }));
 
 export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
-	const [selected_nextstep, deselect_nextstep] = React.useState(false);
-
-	const handle_next_step = (
-		event: React.MouseEvent<HTMLElement>,
-	) => {
-		props.next_step(true);
-		deselect_nextstep(false);
-	};
-
 	return (
 		<ToggleContainer>
 			<Paper
@@ -68,23 +64,41 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 			>
 				<StyledToggleButtonGroup
 					size="medium"
-					value={false}
-					onChange={handle_next_step}
-					aria-label="text formatting"
+					aria-label="dataset new/retry"
 				>
-					<ToggleButton value="next" selected={selected_nextstep} aria-label="next step">
-						<SkipNextRoundedIcon />
+					<ToggleButton value={false} onClick={() => {
+							props.randomize();
+						}} aria-label="new dataset">
+						<CasinoIcon color="error" />
+					</ToggleButton>
+					<ToggleButton value={false} onClick={() => {
+							props.retry();
+						}} aria-label="retry dataset">
+						<ReplayIcon color="warning" />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
 
 				<Divider flexItem orientation="vertical" sx={{ mx: 0.5, my: 1 }} />
 
+				<StyledToggleButtonGroup size="medium" aria-label="next step">
+					<ToggleButton
+						value="next step"
+						selected={false}
+						onClick={() => {
+							props.next_step(true);
+						}}
+						aria-label="next step"
+					>
+						<SkipNextRoundedIcon />
+					</ToggleButton>
+				</StyledToggleButtonGroup>
+
 				<StyledToggleButtonGroup
 					size="medium"
 					value={props.runstate}
 					exclusive
-					onChange={props.handle_toggle_run}
-					aria-label="text alignment"
+					onChange={props.toggle_run}
+					aria-label="simulation play/pause"
 				>
 					<ToggleButton value={true} aria-label="play simulation">
 						<PlayArrowRoundedIcon color="success" />
