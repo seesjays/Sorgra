@@ -10,6 +10,7 @@ import { ChartData } from "chart.js";
 import { Grid } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
+import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 
 enum Speed {
 	SLOW = 2000,
@@ -195,6 +196,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 					toggle_run={handle_toggle_run}
 					runstate={running}
 				/>
+				<SortingChartMessageBox messages={steps_model.messages}>
 			</Grid>
 		</TallGrid>
 	);
