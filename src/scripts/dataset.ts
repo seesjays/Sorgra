@@ -129,6 +129,7 @@ export class SortingOperationController {
     private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(204, 185, 116)"];
     private data_highlights: string[]; // Highlight diffing
     public step_counter: number;
+    public messages: string[];
 
     private data_x: number[];
     private data_y_original: number[];
@@ -140,6 +141,14 @@ export class SortingOperationController {
         this.operation = operation;
 
         this.step_counter = 0;
+        if (operation.messages)
+        {
+            this.messages = operation.messages;
+        }
+        else
+        {
+            this.messages = ["Undocumented Step"];
+        }
 
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.data_x = Array.from({ length: this.operation.data_y.length }, (_, i) => i + 1);

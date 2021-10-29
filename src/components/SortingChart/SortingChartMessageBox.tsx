@@ -6,8 +6,8 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 
 type SortingChartMessageBoxProps = {
-	messages?: string[];
-	message_ind?: number;
+	messages: string[];
+	message_ind: number;
 };
 
 export default function SortingChartMessageBox(
@@ -31,7 +31,7 @@ export default function SortingChartMessageBox(
 	const keys = ["prev", "curr", "next"];
 
 	const messages = inds.map((ind, index) => (
-		<ListItem key={keys[index]} disablePadding>
+		<ListItem key={keys[index]}>
 			<ListItemText primary={props.messages?.[ind]} />
 		</ListItem>
 	));

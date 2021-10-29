@@ -60,6 +60,8 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 	const [speed, set_speed] = React.useState<Speed>(Speed.FASTEST);
 
+	const [step_message_ind, set_step_message_ind] = React.useState(0);
+
 	const next_step = React.useCallback(
 		(user_invoked: boolean): void => {
 			if (complete) {
@@ -139,17 +141,16 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		setStep(steps_model.retry());
 		toggle_run(false);
 		toggle_complete(false);
-		
 	}, [steps_model]);
 
 	const randomize_sim = React.useCallback((): void => {
 		toggle_run(false);
 		toggle_complete(false);
-		
+
 		dataset_model.current.randomize_y();
 		let new_step_model = dataset_model.current.generate_bubblesort_steps();
 
-		let new_step_controller = new SortingOperationController(new_step_model); 
+		let new_step_controller = new SortingOperationController(new_step_model);
 		set_steps_model(new_step_controller);
 
 		let new_set = new_step_controller?.get_chart_dataset();
@@ -157,8 +158,6 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		if (new_set) {
 			setStep(new_set);
 		}
-
-		
 	}, []);
 
 	React.useEffect(() => {
@@ -196,7 +195,10 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 					toggle_run={handle_toggle_run}
 					runstate={running}
 				/>
-				<SortingChartMessageBox messages={steps_model.messages}>
+				<SortingChartMessageBox
+					messages={steps_model.messages}
+					message_ind={step_message_ind}
+				/>
 			</Grid>
 		</TallGrid>
 	);
