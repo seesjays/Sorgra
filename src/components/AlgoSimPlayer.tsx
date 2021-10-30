@@ -11,13 +11,14 @@ import { Grid } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
+import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 
-enum Speed {
-	SLOW = 2000,
-	NORMAL = 1000,
-	FAST = 500,
-	FASTER = 250,
-	FASTEST = 100,
+export enum Speed {
+	SLOW = 2,
+	NORMAL = 1,
+	FAST = .5,
+	FASTER = .25,
+	FASTEST =.1
 }
 
 type SimPlayerProps = {
@@ -35,7 +36,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg));
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
-	const [running, toggle_run] = React.useState(false);
+	const [running, set_run_state] = React.useState(false);
 	const [complete, toggle_complete] = React.useState(false);
 
 	const [steps_model, set_steps_model] =
@@ -58,18 +59,28 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		],
 	});
 
-	const [speed, set_speed] = React.useState<Speed>(Speed.FASTEST);
+	const [speed, set_speed] = React.useState<Speed>(Speed.NORMAL);
 
-	const [step_message_ind, set_step_message_ind] = React.useState(0);
+	const [step_message_history, set_step_message_history] = React.useState([0]);
+
+	// initial chart step
+	React.useEffect(() => {
+		let initial_set = steps_model?.get_chart_dataset();
+
+		if (initial_set) {
+			setStep(initial_set);
+		}
+	}, [steps_model]);
 
 	const next_step = React.useCallback(
 		(user_invoked: boolean): void => {
 			if (complete) {
-				toggle_run(false);
+				set_run_state(false);
 				return;
 			}
 
 			setStep(steps_model?.next_step());
+
 			if (steps_model.complete) {
 				toggle_complete(true);
 			}
@@ -77,35 +88,65 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		[complete, steps_model]
 	);
 
+	const toggle_run = React.useCallback(
+		(run_state: boolean): void => {
+			if (run_state !== null) {
+				if (run_state === running) {
+					return;
+				}
+
+				set_run_state(run_state);
+			}
+		},
+		[running]
+	);
+
+	const speed_change = React.useCallback((n_spd) => {
+		let new_speed:Speed = n_spd;
+		set_speed(new_speed);
+	}, []);
+
+	const handle_speed_change = (event: Event, value: number | number[]): void => {	
+		speed_change(value);
+	}
+
+	const handle_toggle_run = (
+		event: React.MouseEvent<HTMLElement>,
+		run_state: boolean
+	): void => {
+		toggle_run(run_state);
+	};
+
 	const timeordealone = React.useCallback(() => {
 		if (complete || steps_model.complete) {
 			console.log(`${dataset_model.current.algorithm_name} Complete`);
 
 			clearTimeout(timer_instance.current);
 			toggle_complete(true);
-			toggle_run(false);
+			set_run_state(false);
 			return;
 		} else if (!running) {
 			console.log(`${dataset_model.current.algorithm_name} Paused`);
 
 			clearTimeout(timer_instance.current);
-			toggle_run(false);
+			set_run_state(false);
 			return;
 		}
 
-		let ivl = speed; // ms
+		let ivl = speed*1000; // ms
 		let exd = Date.now() + ivl;
-		timer_instance.current = setTimeout(step, ivl, ivl, exd);
-		function step(interval: number, initexpect: number) {
+		timer_instance.current = setTimeout(time_step, ivl, ivl, exd);
+		function time_step(interval: number, initexpect: number) {
 			let dt = Date.now() - initexpect; // the drift (positive for overshooting)
 			if (dt > interval) {
 				// pause
 				// console.log("timer miss");
-				//clearInterval(timer_instance.current);
-				//toggle_run(false);
+
+				clearInterval(timer_instance.current);
+				toggle_run(false);
 				next_step(false);
 
-				///return;
+				return;
 			} else {
 				//console.log("timer ping");
 				next_step(false);
@@ -115,36 +156,23 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 			initexpect += interval;
 			timer_instance.current = setTimeout(
-				step,
+				time_step,
 				Math.max(0, interval - dt),
 				interval,
 				initexpect
 			);
 		}
-	}, [complete, next_step, running, speed, steps_model.complete]);
-
-	const handle_toggle_run = React.useCallback(
-		(event: React.MouseEvent<HTMLElement>, run_state: boolean): void => {
-			// enforce one selected
-			if (run_state !== null) {
-				if (run_state === running) {
-					return;
-				}
-
-				toggle_run(run_state);
-			}
-		},
-		[running]
-	);
+	}, [complete, next_step, running, speed, steps_model.complete, toggle_run]);
 
 	const retry_sim = React.useCallback((): void => {
-		setStep(steps_model.retry());
-		toggle_run(false);
+		set_run_state(false);
 		toggle_complete(false);
+
+		setStep(steps_model.retry());
 	}, [steps_model]);
 
 	const randomize_sim = React.useCallback((): void => {
-		toggle_run(false);
+		set_run_state(false);
 		toggle_complete(false);
 
 		dataset_model.current.randomize_y();
@@ -160,13 +188,10 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		}
 	}, []);
 
+	// update message history
 	React.useEffect(() => {
-		let initial_set = steps_model?.get_chart_dataset();
-
-		if (initial_set) {
-			setStep(initial_set);
-		}
-	}, [steps_model]);
+		set_step_message_history(steps_model?.message_history);
+	}, [step, steps_model]);
 
 	React.useEffect(() => {
 		if (running) {
@@ -193,11 +218,13 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 					randomize={randomize_sim}
 					next_step={next_step}
 					toggle_run={handle_toggle_run}
-					runstate={running}
+					run_state={running}
+					complete_state={complete}
 				/>
+				<SortingSpeedBar handle_speed_change={handle_speed_change} run_state={running}/>
 				<SortingChartMessageBox
 					messages={steps_model.messages}
-					message_ind={step_message_ind}
+					message_ind_history={step_message_history}
 				/>
 			</Grid>
 		</TallGrid>

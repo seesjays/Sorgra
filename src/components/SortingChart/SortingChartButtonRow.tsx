@@ -15,7 +15,9 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 type SortingChartButtonRowProps = {
-	runstate: boolean;
+	run_state: boolean;            
+	complete_state: boolean;
+
 	retry(): void;
 	randomize(): void;
 	next_step(user_invoked: boolean): void;
@@ -87,6 +89,7 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 						onClick={() => {
 							props.next_step(true);
 						}}
+						disabled={props.complete_state}
 						aria-label="next step"
 					>
 						<SkipNextRoundedIcon />
@@ -95,16 +98,16 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 
 				<StyledToggleButtonGroup
 					size="medium"
-					value={props.runstate}
+					value={props.run_state}
 					exclusive
 					onChange={props.toggle_run}
 					aria-label="simulation play/pause"
 				>
-					<ToggleButton value={true} aria-label="play simulation">
-						<PlayArrowRoundedIcon color="success" />
+					<ToggleButton value={true} disabled={props.complete_state} aria-label="play simulation">
+						<PlayArrowRoundedIcon color="success" sx={props.complete_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}} />
 					</ToggleButton>
-					<ToggleButton value={false} aria-label="pause simulation">
-						<PauseRoundedIcon color="info" />
+					<ToggleButton value={false} disabled={props.complete_state}  aria-label="pause simulation">
+						<PauseRoundedIcon color="info" sx={props.complete_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}} />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
 			</Paper>

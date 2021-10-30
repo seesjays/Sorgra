@@ -46,7 +46,7 @@ export class SortingDatasetModel {
 
 
     constructor(init_algorithm: string) {
-        this.data_set_size = 5;
+        this.data_set_size = 30;
         this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
@@ -129,7 +129,9 @@ export class SortingOperationController {
     private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(204, 185, 116)"];
     private data_highlights: string[]; // Highlight diffing
     public step_counter: number;
+
     public messages: string[];
+    public message_history: number[];
 
     private data_x: number[];
     private data_y_original: number[];
@@ -149,6 +151,7 @@ export class SortingOperationController {
         {
             this.messages = ["Undocumented Step"];
         }
+        this.message_history = [0];
 
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.data_x = Array.from({ length: this.operation.data_y.length }, (_, i) => i + 1);
@@ -200,6 +203,12 @@ export class SortingOperationController {
             this.step_counter += 1;
             this.highlight_dataset_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
+            this.message_history.push(this.operation.steps[this.step_counter].message);
+            
+            if (this.message_history.length > 3)
+            {
+                this.message_history.shift();
+            }
         }
 
         return this.get_chart_dataset();
@@ -210,6 +219,7 @@ export class SortingOperationController {
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.step_counter = 0;
         this.operation.data_y = [...this.data_y_original];
+        this.message_history = [0];
 
 
         return this.get_chart_dataset();
