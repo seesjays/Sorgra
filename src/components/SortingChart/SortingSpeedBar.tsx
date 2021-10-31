@@ -19,6 +19,9 @@ function valuetext(value: number) {
 		case Speed.FASTER:
 			return "Faster";
 
+		case Speed.FASTERER:
+			return "Faster-er";
+
 		case Speed.FASTEST:
 			return "Fastest";
 	}
@@ -49,6 +52,9 @@ export default function SortingSpeedBar(props: SortingSpeedBarProps) {
 		},
 		{
 			value: Speed.FASTER,
+		},
+		{
+			value: Speed.FASTERER,
 		},
 		{
 			value: Speed.FASTEST,

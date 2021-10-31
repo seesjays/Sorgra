@@ -3,29 +3,31 @@ import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 
 import {
-	SortingDatasetModel,
+	SortingOperationGenerator,
 	SortingOperationController,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
-import { Grid } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
+import { Box } from "@mui/system";
 
 export enum Speed {
 	SLOW = 2,
 	NORMAL = 1,
-	FAST = .5,
-	FASTER = .25,
-	FASTEST =.1
+	FAST = 0.5,
+	FASTER = 0.25,
+	FASTERER = 0.1,
+	FASTEST = 0.05,
 }
 
 type SimPlayerProps = {
 	starting_alg: string;
 };
 
-const TallGrid = styled(Grid)(({ theme }) => ({
+const TallStack = styled(Stack)(({ theme }) => ({
 	height: "100%",
 	backgroundColor: theme.palette.background.default,
 }));
@@ -33,7 +35,7 @@ const TallGrid = styled(Grid)(({ theme }) => ({
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	// try to update the timer system to be more stateful/actually follow React paradigms in the future
 
-	const dataset_model = React.useRef(new SortingDatasetModel(starting_alg));
+	const dataset_model = React.useRef(new SortingOperationGenerator("BUBBLE"));
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
 	const [running, set_run_state] = React.useState(false);
@@ -42,7 +44,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	const [steps_model, set_steps_model] =
 		React.useState<SortingOperationController>(
 			new SortingOperationController(
-				dataset_model.current.generate_bubblesort_steps()
+				dataset_model.current.generate_selectionsort_steps()
 			)
 		);
 
@@ -102,13 +104,16 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	);
 
 	const speed_change = React.useCallback((n_spd) => {
-		let new_speed:Speed = n_spd;
+		let new_speed: Speed = n_spd;
 		set_speed(new_speed);
 	}, []);
 
-	const handle_speed_change = (event: Event, value: number | number[]): void => {	
+	const handle_speed_change = (
+		event: Event,
+		value: number | number[]
+	): void => {
 		speed_change(value);
-	}
+	};
 
 	const handle_toggle_run = (
 		event: React.MouseEvent<HTMLElement>,
@@ -119,21 +124,21 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 
 	const timeordealone = React.useCallback(() => {
 		if (complete || steps_model.complete) {
-			console.log(`${dataset_model.current.algorithm_name} Complete`);
+			console.log(`${dataset_model.current.current_algorithm.name} Complete`);
 
 			clearTimeout(timer_instance.current);
 			toggle_complete(true);
 			set_run_state(false);
 			return;
 		} else if (!running) {
-			console.log(`${dataset_model.current.algorithm_name} Paused`);
+			console.log(`${dataset_model.current.current_algorithm.name} Paused`);
 
 			clearTimeout(timer_instance.current);
 			set_run_state(false);
 			return;
 		}
 
-		let ivl = speed*1000; // ms
+		let ivl = speed * 1000; // ms
 		let exd = Date.now() + ivl;
 		timer_instance.current = setTimeout(time_step, ivl, ivl, exd);
 		function time_step(interval: number, initexpect: number) {
@@ -193,6 +198,8 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		set_step_message_history(steps_model?.message_history);
 	}, [step, steps_model]);
 
+
+	// start/clear timer when run toggled
 	React.useEffect(() => {
 		if (running) {
 			timeordealone();
@@ -202,17 +209,21 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	}, [running, timeordealone]);
 
 	return (
-		<TallGrid
-			container
-			alignItems="center"
+		<TallStack
+			direction={{ xs: "column", md: "row" }}
 			alignContent="flex-start"
 			spacing={{ xs: 0, md: 0 }}
-			columns={12}
 		>
-			<Grid container justifyContent="center" item xs={12} md={8} key={0}>
+			<Box display="flex" justifyContent="center" alignItems={"center"} padding={{ xs: "0.5em", md: "5%" }} width={{ xs: "100%", md: "60%" }}>
 				<SortingChartContainer chart_data={step} />
-			</Grid>
-			<Grid container justifyContent="center" item xs={12} md={4} key={1}>
+			</Box>
+
+			<Stack
+				justifyContent={"center"}
+				alignItems={"center"}
+				width={{ xs: "100%", md: "40%" }}
+				spacing={{ xs: 2, md: 4 }}
+			>
 				<SortingChartButtonRow
 					retry={retry_sim}
 					randomize={randomize_sim}
@@ -221,13 +232,16 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 					run_state={running}
 					complete_state={complete}
 				/>
-				<SortingSpeedBar handle_speed_change={handle_speed_change} run_state={running}/>
+				<SortingSpeedBar
+					handle_speed_change={handle_speed_change}
+					run_state={running}
+				/>
 				<SortingChartMessageBox
 					messages={steps_model.messages}
 					message_ind_history={step_message_history}
 				/>
-			</Grid>
-		</TallGrid>
+			</Stack>
+		</TallStack>
 	);
 };
 

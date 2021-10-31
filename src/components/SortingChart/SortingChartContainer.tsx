@@ -33,9 +33,11 @@ const chart_options: ChartOptions = {
 };
 
 const ContainerPaper = styled(Paper)(({ theme }) => ({
-	height: "85%",
-	width: "85%",
+	height: "fit-content",
+	width: "100%",
 	position: "relative",
+	border: `2px solid ${theme.palette.primary.light}`,
+	margin: "0.1rem 0",
 }));
 
 export const SortingChartContainer = (
@@ -45,8 +47,6 @@ export const SortingChartContainer = (
 		<ContainerPaper
 			elevation={2}
 			sx={{
-				border: (theme) => `2px solid ${theme.palette.primary.light}`,
-				marginTop: "0.5rem",
 			}}
 		>
 			<Bar data={chartdata.chart_data} options={chart_options} />

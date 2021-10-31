@@ -6,16 +6,19 @@ enum HIGHLIGHT_TYPE {
     DISCREPANCY,
     CORRECTED,
     SEEKING,
+    SEEKING_ALT,
     SELECTED,
 }
 
 type HighlightedIndex = {
     color: HIGHLIGHT_TYPE;
     indices: number[];
+    excl_indices?: number[];
 }
 
 type SortStep = {
     highlights: HighlightedIndex[];
+    keep_prev_highlight?: boolean;
     message: number;
     changes?: [number, number][];
 }
@@ -27,35 +30,47 @@ interface SortingOperation {
     messages?: string[];
 }
 
-export class SortingDatasetModel {
+
+export enum ALGORITHM {
+    BUBBLE_SORT,
+    SELECTION_SORT,
+}
+
+interface algorithm {
+    name: string;
+    generate(): SortingOperation;
+}
+
+type algorithms = "BUBBLE" | "SELECTION";
+
+export type Algorithms = Record<algorithms, algorithm>;
+
+export class SortingOperationGenerator {
     data_set_size: number;
     step_counter: number;
 
-
     private data_x: number[];
-
     private data_original: number[]; // Returning to original dataset
     private data_y: number[]; // Actual sorting
 
-    private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(204, 185, 116)"];
-    private data_highlights: string[]; // Highlight diffing
+    public readonly algorithms: Algorithms;
+    public current_algorithm: algorithm;
 
 
-    algorithm_name: string;
-
-
-
-    constructor(init_algorithm: string) {
-        this.data_set_size = 30;
+    constructor(init_algorithm: algorithms) {
+        this.data_set_size = 20;
         this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
 
-        this.data_highlights = new Array(this.data_set_size).fill(this.highlight_cols[0]);
+        this.algorithms = {
+            BUBBLE: {name: "Bubble Sort", generate: this.generate_bubblesort_steps},
+            SELECTION: {name: "Selection Sort", generate: this.generate_selectionsort_steps},
+        }
 
-        this.algorithm_name = init_algorithm;
+        this.current_algorithm = this.algorithms[init_algorithm];
     }
 
     private gen_random_int_inclusive(min: number, max: number): number {
@@ -80,17 +95,17 @@ export class SortingDatasetModel {
 
     public generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
-        const messages = ["Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Complete"];
+        const messages = ["Bubble Sort", "Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
 
         let clear = false;
 
-        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [0, 1] }], message: 0 });
+        sort_steps.push({ highlights: [], message: 0 });
 
         while (!clear) {
             clear = true;
             for (let i = 0; i < this.data_set_size - 1; i++) {
                 if (this.data_y[i] > this.data_y[i + 1]) {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 1 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }], message: 2 });
 
                     let temp = this.data_y[i + 1];
                     this.data_y[i + 1] = this.data_y[i];
@@ -99,34 +114,95 @@ export class SortingDatasetModel {
                     this.data_y[i] = temp;
                     let restore_higher_from_temp: [number, number] = [i, temp];
 
-
                     clear = false;
 
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 2, changes: [replace_higher_with_lower, restore_higher_from_temp] });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }], message: 3, changes: [replace_higher_with_lower, restore_higher_from_temp] });
                 }
                 else {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }, { color: HIGHLIGHT_TYPE.BASE, indices: Array.from(this.data_x.keys()).filter(x => (x !== i) && (x !== i + 1)) }], message: 0 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }], message: 1 });
                 }
             }
         }
 
-        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: 3, });
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: 4, });
 
         this.return_to_original();
         return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
+    public generate_selectionsort_steps(): SortingOperation {
+        let sort_steps: SortStep[] = [];
+        const messages = [
+            "Selection Sort",
+            "Incremented swap index.",
+            "Searching for a value lower than the last low.",
+            "Found a lower value. Will continue searching for an even lower one.",
+            "Swapping the swap index for the lowest value.",
+            "Swap complete.",
+            "Didn't find any lower values, incrementing swap index.",
+            "Selection Sort: Complete"
+        ];
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+        let data_length = this.data_x.length;
+        let step: SortStep;
+        for (let i = 0; i < data_length; i++) {
+            let j_min = i;
+            step = { highlights: [{ color: HIGHLIGHT_TYPE.SELECTED, indices: [i] }], message: 1 };
+            sort_steps.push(step);
+
+            for (let j = i + 1; j < data_length; j++) {
+                if (this.data_y[j] < this.data_y[j_min]) {
+                    j_min = j;
+                    step = { highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [j] }, { color: HIGHLIGHT_TYPE.SEEKING_ALT, indices: [j_min] }, { color: HIGHLIGHT_TYPE.SELECTED, indices: [i] }], message: 3 };
+                    sort_steps.push(step);
+                }
+                else {
+                    step = { highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [j] }, { color: HIGHLIGHT_TYPE.SEEKING_ALT, indices: [j_min] }, { color: HIGHLIGHT_TYPE.SELECTED, indices: [i] }], message: 2 };
+                    sort_steps.push(step);
+                }
+            }
+
+            if (j_min !== i) {
+                step = { highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, j_min] }], message: 4 }
+                sort_steps.push(step);
+
+                let tmp = this.data_y[j_min];
+
+                this.data_y[j_min] = this.data_y[i];
+                const replace_new_low_index_with_minimum: [number, number] = [j_min, this.data_y[i]];
+
+                this.data_y[i] = tmp;
+                const replace_last_minimum_with_temp: [number, number] = [i, tmp];
+
+                step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, j_min] }], changes: [replace_new_low_index_with_minimum, replace_last_minimum_with_temp], message: 5 }
+                sort_steps.push(step);
+            }
+            else
+            {
+                step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i] }], message: 6 }
+            }
+
+
+        }
+
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 7 }
+        sort_steps.push(step);
+
+        this.return_to_original();
+        return { name: "Selection Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
     public randomize_y(): void {
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
     }
-
-
 }
 
 export class SortingOperationController {
     private operation: SortingOperation;
-    private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(204, 185, 116)"];
+    private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(194, 147, 233)", "rgb(204, 185, 116)"];
     private data_highlights: string[]; // Highlight diffing
     public step_counter: number;
 
@@ -143,12 +219,10 @@ export class SortingOperationController {
         this.operation = operation;
 
         this.step_counter = 0;
-        if (operation.messages)
-        {
+        if (operation.messages) {
             this.messages = operation.messages;
         }
-        else
-        {
+        else {
             this.messages = ["Undocumented Step"];
         }
         this.message_history = [0];
@@ -173,11 +247,28 @@ export class SortingOperationController {
         };
     };
 
-    private highlight_dataset_step(sortingstep: SortStep): ChartData {
-        for (let highlight of sortingstep.highlights) {
-            let selected_color = this.highlight_cols[highlight.color];
-            for (let indice of highlight.indices) {
-                this.data_highlights[indice] = selected_color;
+    private highlight_step(sortingstep: SortStep): ChartData {
+        let step_highlights = sortingstep.highlights;
+
+        if (!sortingstep.keep_prev_highlight) {
+            this.data_highlights.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
+        }
+
+        for (let highlight of step_highlights) {
+            if (highlight.excl_indices) {
+                let selected_color = this.highlight_cols[highlight.color];
+
+                for (let i = 0; i < this.data_x.length; i++) {
+                    if (!highlight.excl_indices.includes(i)) {
+                        this.data_highlights[i] = selected_color;
+                    }
+                }
+            }
+            else {
+                let selected_color = this.highlight_cols[highlight.color];
+                for (let indice of highlight.indices) {
+                    this.data_highlights[indice] = selected_color;
+                }
             }
         }
 
@@ -194,21 +285,20 @@ export class SortingOperationController {
     }
 
     public next_step(): ChartData {
+        if (!this.complete) {
+            this.step_counter += 1;
+            this.highlight_step(this.operation.steps[this.step_counter]);
+            this.enact_step_changes(this.operation.steps[this.step_counter]);
+            this.message_history.push(this.operation.steps[this.step_counter].message);
+
+            if (this.message_history.length > 3) {
+                this.message_history.shift();
+            }
+        }
+
         if (this.step_counter === this.operation.steps.length - 1) {
             this.complete = true;
             return this.get_chart_dataset();
-        }
-
-        if (!this.complete) {
-            this.step_counter += 1;
-            this.highlight_dataset_step(this.operation.steps[this.step_counter]);
-            this.enact_step_changes(this.operation.steps[this.step_counter]);
-            this.message_history.push(this.operation.steps[this.step_counter].message);
-            
-            if (this.message_history.length > 3)
-            {
-                this.message_history.shift();
-            }
         }
 
         return this.get_chart_dataset();

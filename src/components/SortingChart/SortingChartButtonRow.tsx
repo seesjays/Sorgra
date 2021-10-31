@@ -67,16 +67,17 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 				<StyledToggleButtonGroup
 					size="medium"
 					aria-label="dataset new/retry"
+					disabled={props.run_state}					
 				>
 					<ToggleButton value={false} onClick={() => {
 							props.randomize();
 						}} aria-label="new dataset">
-						<CasinoIcon color="error" />
+						<CasinoIcon color="error" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
 					</ToggleButton>
 					<ToggleButton value={false} onClick={() => {
 							props.retry();
 						}} aria-label="retry dataset">
-						<ReplayIcon color="warning" />
+						<ReplayIcon color="warning" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
 
