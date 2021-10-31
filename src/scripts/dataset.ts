@@ -41,33 +41,31 @@ interface algorithm {
     generate(): SortingOperation;
 }
 
-type algorithms = "BUBBLE" | "SELECTION";
+export type algorithms = "BUBBLE" | "SELECTION";
 
-export type Algorithms = Record<algorithms, algorithm>;
+type AlgorithmData = Record<algorithms, algorithm>;
 
 export class SortingOperationGenerator {
     data_set_size: number;
-    step_counter: number;
 
     private data_x: number[];
     private data_original: number[]; // Returning to original dataset
     private data_y: number[]; // Actual sorting
 
-    public readonly algorithms: Algorithms;
+    public readonly algorithms: AlgorithmData;
     public current_algorithm: algorithm;
 
 
     constructor(init_algorithm: algorithms) {
         this.data_set_size = 20;
-        this.step_counter = 0;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
 
         this.algorithms = {
-            BUBBLE: {name: "Bubble Sort", generate: this.generate_bubblesort_steps},
-            SELECTION: {name: "Selection Sort", generate: this.generate_selectionsort_steps},
+            BUBBLE: {name: "Bubble Sort", generate: () => this.generate_bubblesort_steps()},
+            SELECTION: {name: "Selection Sort", generate: () => this.generate_selectionsort_steps()},
         }
 
         this.current_algorithm = this.algorithms[init_algorithm];
@@ -93,7 +91,7 @@ export class SortingOperationGenerator {
         this.data_y = this.data_original;
     }
 
-    public generate_bubblesort_steps(): SortingOperation {
+    private generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
         const messages = ["Bubble Sort", "Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
 
@@ -130,7 +128,11 @@ export class SortingOperationGenerator {
         return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    public generate_selectionsort_steps(): SortingOperation {
+    get name(): string {
+        return this.current_algorithm.name;
+    }
+
+    private generate_selectionsort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
         const messages = [
             "Selection Sort",
@@ -194,9 +196,27 @@ export class SortingOperationGenerator {
         return { name: "Selection Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    public randomize_y(): void {
+    private randomize_y(): void {
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
+    }
+
+    public generate_new_operation(): SortingOperation {
+        this.randomize_y();
+        return this.current_algorithm.generate();
+    }
+
+    public regenerate_operation() : SortingOperation {
+        return this.current_algorithm.generate();
+    }
+
+    public change_dataset_size(size: number): void {
+        if (size < 5 || size > 20)
+        {
+            return;
+        }
+
+        this.data_set_size = size;
     }
 }
 
@@ -204,21 +224,26 @@ export class SortingOperationController {
     private operation: SortingOperation;
     private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(194, 147, 233)", "rgb(204, 185, 116)"];
     private data_highlights: string[]; // Highlight diffing
+    
+    private data_x: number[];
+    private data_y_original: number[];
+
+    public name: string;
+
     public step_counter: number;
 
     public messages: string[];
     public message_history: number[];
-
-    private data_x: number[];
-    private data_y_original: number[];
 
     public complete: boolean = false;
 
 
     constructor(operation: SortingOperation) {
         this.operation = operation;
+        this.name = operation.name;
 
         this.step_counter = 0;
+        
         if (operation.messages) {
             this.messages = operation.messages;
         }

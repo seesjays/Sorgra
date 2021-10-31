@@ -27,7 +27,7 @@ function App() {
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
-			<AlgoSimPlayer starting_alg="Bubble Sort" />
+			<AlgoSimPlayer starting_alg="SELECTION" />
 		</ThemeProvider>
 	);
 }

@@ -5,6 +5,7 @@ import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 import {
 	SortingOperationGenerator,
 	SortingOperationController,
+	algorithms,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
 import { Stack } from "@mui/material";
@@ -24,7 +25,7 @@ export enum Speed {
 }
 
 type SimPlayerProps = {
-	starting_alg: string;
+	starting_alg: algorithms;
 };
 
 const TallStack = styled(Stack)(({ theme }) => ({
@@ -35,7 +36,7 @@ const TallStack = styled(Stack)(({ theme }) => ({
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	// try to update the timer system to be more stateful/actually follow React paradigms in the future
 
-	const dataset_model = React.useRef(new SortingOperationGenerator("BUBBLE"));
+	const dataset_model = React.useRef(new SortingOperationGenerator(starting_alg));
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
 	const [running, set_run_state] = React.useState(false);
@@ -44,7 +45,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	const [steps_model, set_steps_model] =
 		React.useState<SortingOperationController>(
 			new SortingOperationController(
-				dataset_model.current.generate_selectionsort_steps()
+				dataset_model.current.generate_new_operation()
 			)
 		);
 
@@ -180,8 +181,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		set_run_state(false);
 		toggle_complete(false);
 
-		dataset_model.current.randomize_y();
-		let new_step_model = dataset_model.current.generate_bubblesort_steps();
+		let new_step_model = dataset_model.current.generate_new_operation();
 
 		let new_step_controller = new SortingOperationController(new_step_model);
 		set_steps_model(new_step_controller);
@@ -198,7 +198,6 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		set_step_message_history(steps_model?.message_history);
 	}, [step, steps_model]);
 
-
 	// start/clear timer when run toggled
 	React.useEffect(() => {
 		if (running) {
@@ -214,15 +213,21 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			alignContent="flex-start"
 			spacing={{ xs: 0, md: 0 }}
 		>
-			<Box display="flex" justifyContent="center" alignItems={"center"} padding={{ xs: "0.5em", md: "5%" }} width={{ xs: "100%", md: "60%" }}>
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems={"center"}
+				padding={{ xs: "0.5em", md: "5%" }}
+				width={{ xs: "100%", md: "60%" }}
+			>
 				<SortingChartContainer chart_data={step} />
 			</Box>
 
 			<Stack
-				justifyContent={"center"}
+				justifyContent={{ xs:"center", md: "flex-end"}}
 				alignItems={"center"}
 				width={{ xs: "100%", md: "40%" }}
-				spacing={{ xs: 2, md: 4 }}
+				spacing={{ xs: 2, md: 2 }}
 			>
 				<SortingChartButtonRow
 					retry={retry_sim}
@@ -236,10 +241,12 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 					handle_speed_change={handle_speed_change}
 					run_state={running}
 				/>
-				<SortingChartMessageBox
-					messages={steps_model.messages}
-					message_ind_history={step_message_history}
-				/>
+				<Box width={"100%"} height="50%">
+					<SortingChartMessageBox
+						messages={steps_model.messages}
+						message_ind_history={step_message_history}
+					/>
+				</Box>
 			</Stack>
 		</TallStack>
 	);
