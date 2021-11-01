@@ -3,6 +3,7 @@ import "./App.css";
 import AlgoSimPlayer from "./components/AlgoSimPlayer";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Container, CssBaseline, styled } from "@mui/material";
+import { Algorithms } from "./scripts/dataset";
 
 const theme = createTheme({
 	palette: {
@@ -27,7 +28,7 @@ function App() {
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
-			<AlgoSimPlayer starting_alg="SELECTION" />
+			<AlgoSimPlayer starting_alg={"Selection Sort"} />
 		</ThemeProvider>
 	);
 }

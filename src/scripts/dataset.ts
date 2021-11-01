@@ -30,45 +30,37 @@ interface SortingOperation {
     messages?: string[];
 }
 
-
-export enum ALGORITHM {
-    BUBBLE_SORT,
-    SELECTION_SORT,
-}
-
 interface algorithm {
-    name: string;
     generate(): SortingOperation;
 }
 
-export type algorithms = "BUBBLE" | "SELECTION";
+export type Algorithms = "Bubble Sort" | "Selection Sort";
 
-type AlgorithmData = Record<algorithms, algorithm>;
+type AlgorithmData = Record<Algorithms, algorithm>;
 
 export class SortingOperationGenerator {
-    data_set_size: number;
+    data_set_size: number = 20;
 
     private data_x: number[];
     private data_original: number[]; // Returning to original dataset
     private data_y: number[]; // Actual sorting
 
-    public readonly algorithms: AlgorithmData;
-    public current_algorithm: algorithm;
+    private readonly algorithms: AlgorithmData;
+    public current_algorithm: Algorithms;
 
-
-    constructor(init_algorithm: algorithms) {
-        this.data_set_size = 20;
+    constructor(init_algorithm: Algorithms, dataset_size?: number) {
+        if (dataset_size) this.data_set_size = dataset_size;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
 
         this.algorithms = {
-            BUBBLE: {name: "Bubble Sort", generate: () => this.generate_bubblesort_steps()},
-            SELECTION: {name: "Selection Sort", generate: () => this.generate_selectionsort_steps()},
+            "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
+            "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
         }
 
-        this.current_algorithm = this.algorithms[init_algorithm];
+        this.current_algorithm = init_algorithm;
     }
 
     private gen_random_int_inclusive(min: number, max: number): number {
@@ -88,7 +80,7 @@ export class SortingOperationGenerator {
     }
 
     private return_to_original(): void {
-        this.data_y = this.data_original;
+        this.data_y = [...this.data_original];
     }
 
     private generate_bubblesort_steps(): SortingOperation {
@@ -125,11 +117,8 @@ export class SortingOperationGenerator {
         sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: 4, });
 
         this.return_to_original();
-        return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
-    }
 
-    get name(): string {
-        return this.current_algorithm.name;
+        return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
     private generate_selectionsort_steps(): SortingOperation {
@@ -181,18 +170,17 @@ export class SortingOperationGenerator {
                 step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, j_min] }], changes: [replace_new_low_index_with_minimum, replace_last_minimum_with_temp], message: 5 }
                 sort_steps.push(step);
             }
-            else
-            {
+            else {
                 step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i] }], message: 6 }
+                sort_steps.push(step);
             }
-
-
         }
 
         step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 7 }
         sort_steps.push(step);
 
         this.return_to_original();
+
         return { name: "Selection Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
@@ -201,18 +189,24 @@ export class SortingOperationGenerator {
         this.data_original = [...this.data_y];
     }
 
-    public generate_new_operation(): SortingOperation {
-        this.randomize_y();
-        return this.current_algorithm.generate();
+    get name(): string {
+        return this.current_algorithm;
     }
 
-    public regenerate_operation() : SortingOperation {
-        return this.current_algorithm.generate();
+    public generate_new_operation(): SortingOperation {
+        this.randomize_y();
+        return this.algorithms[this.current_algorithm].generate();
+    }
+
+    public regenerate_operation(): SortingOperation {
+        this.return_to_original();
+        let out = this.algorithms[this.current_algorithm].generate(); 
+        
+        return out; 
     }
 
     public change_dataset_size(size: number): void {
-        if (size < 5 || size > 20)
-        {
+        if (size < 5 || size > 20) {
             return;
         }
 
@@ -224,7 +218,7 @@ export class SortingOperationController {
     private operation: SortingOperation;
     private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(194, 147, 233)", "rgb(204, 185, 116)"];
     private data_highlights: string[]; // Highlight diffing
-    
+
     private data_x: number[];
     private data_y_original: number[];
 
@@ -243,7 +237,7 @@ export class SortingOperationController {
         this.name = operation.name;
 
         this.step_counter = 0;
-        
+
         if (operation.messages) {
             this.messages = operation.messages;
         }

@@ -5,15 +5,16 @@ import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 import {
 	SortingOperationGenerator,
 	SortingOperationController,
-	algorithms,
+	Algorithms,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
-import { Stack } from "@mui/material";
+import { SelectChangeEvent, Stack } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
+import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
 
 export enum Speed {
 	SLOW = 2,
@@ -25,7 +26,7 @@ export enum Speed {
 }
 
 type SimPlayerProps = {
-	starting_alg: algorithms;
+	starting_alg: Algorithms;
 };
 
 const TallStack = styled(Stack)(({ theme }) => ({
@@ -35,8 +36,11 @@ const TallStack = styled(Stack)(({ theme }) => ({
 
 const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	// try to update the timer system to be more stateful/actually follow React paradigms in the future
+	const default_dataset_size = 15;
+	const dataset_model = React.useRef(
+		new SortingOperationGenerator(starting_alg, default_dataset_size)
+	);
 
-	const dataset_model = React.useRef(new SortingOperationGenerator(starting_alg));
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
 	const [running, set_run_state] = React.useState(false);
@@ -48,7 +52,6 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 				dataset_model.current.generate_new_operation()
 			)
 		);
-
 	const [step, setStep] = React.useState<ChartData>({
 		labels: [0, 1, 2, 3],
 		datasets: [
@@ -61,10 +64,11 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			},
 		],
 	});
+	const [step_message_history, set_step_message_history] = React.useState([0]);
 
 	const [speed, set_speed] = React.useState<Speed>(Speed.NORMAL);
 
-	const [step_message_history, set_step_message_history] = React.useState([0]);
+	const [algorithm, set_algorithm] = React.useState(starting_alg);
 
 	// initial chart step
 	React.useEffect(() => {
@@ -104,35 +108,32 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		[running]
 	);
 
-	const speed_change = React.useCallback((n_spd) => {
-		let new_speed: Speed = n_spd;
-		set_speed(new_speed);
-	}, []);
-
-	const handle_speed_change = (
-		event: Event,
-		value: number | number[]
-	): void => {
-		speed_change(value);
-	};
-
 	const handle_toggle_run = (
-		event: React.MouseEvent<HTMLElement>,
+		_: React.MouseEvent<HTMLElement>,
 		run_state: boolean
 	): void => {
 		toggle_run(run_state);
 	};
 
+	const speed_change = React.useCallback((n_spd) => {
+		let new_speed: Speed = n_spd;
+		set_speed(new_speed);
+	}, []);
+
+	const handle_speed_change = (_: Event, value: number | number[]): void => {
+		speed_change(value);
+	};
+
 	const timeordealone = React.useCallback(() => {
 		if (complete || steps_model.complete) {
-			console.log(`${dataset_model.current.current_algorithm.name} Complete`);
+			console.log(`${dataset_model.current.current_algorithm} Complete`);
 
 			clearTimeout(timer_instance.current);
 			toggle_complete(true);
 			set_run_state(false);
 			return;
 		} else if (!running) {
-			console.log(`${dataset_model.current.current_algorithm.name} Paused`);
+			console.log(`${dataset_model.current.current_algorithm} Paused`);
 
 			clearTimeout(timer_instance.current);
 			set_run_state(false);
@@ -193,6 +194,27 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		}
 	}, []);
 
+	const handle_alg_change = (event: SelectChangeEvent) => {
+		let val = event.target.value;
+		let alg: Algorithms = val as Algorithms;
+		set_algorithm(alg);
+
+		set_run_state(false);
+		toggle_complete(false);
+
+		dataset_model.current.current_algorithm = alg;
+
+		let new_step_model = dataset_model.current.regenerate_operation();
+
+		let new_step_controller = new SortingOperationController(new_step_model);
+		set_steps_model(new_step_controller);
+
+		let new_set = new_step_controller?.get_chart_dataset();
+		if (new_set) {
+			setStep(new_set);
+		}
+	};
+
 	// update message history
 	React.useEffect(() => {
 		set_step_message_history(steps_model?.message_history);
@@ -224,11 +246,12 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 			</Box>
 
 			<Stack
-				justifyContent={{ xs:"center", md: "flex-end"}}
+				justifyContent={{ xs: "center", md: "flex-end" }}
 				alignItems={"center"}
 				width={{ xs: "100%", md: "40%" }}
 				spacing={{ xs: 2, md: 2 }}
 			>
+				<AlgoSwitch current_alg={algorithm} handle_change={handle_alg_change} />
 				<SortingChartButtonRow
 					retry={retry_sim}
 					randomize={randomize_sim}
