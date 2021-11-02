@@ -3,7 +3,7 @@ import "./App.css";
 import AlgoSimPlayer from "./components/AlgoSimPlayer";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Container, CssBaseline, styled } from "@mui/material";
-import { Algorithms } from "./scripts/dataset";
+import { Algorithms, SortingOperationGenerator } from "./scripts/dataset";
 
 const theme = createTheme({
 	palette: {
@@ -25,10 +25,11 @@ const theme = createTheme({
 
 
 function App() {
+	let SortingOperationFactory = new SortingOperationGenerator();
 	return (
 		<ThemeProvider theme={theme}>
 			<CssBaseline />
-			<AlgoSimPlayer starting_alg={"Selection Sort"} />
+			<AlgoSimPlayer sorting_operation_factory={SortingOperationFactory} />
 		</ThemeProvider>
 	);
 }

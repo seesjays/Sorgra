@@ -15,6 +15,7 @@ import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
 import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
+import { SortingChartController } from "./SortingChart/SortingChartController";
 
 export enum Speed {
 	SLOW = 2,
@@ -34,7 +35,7 @@ const TallStack = styled(Stack)(({ theme }) => ({
 	backgroundColor: theme.palette.background.default,
 }));
 
-const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
+const _AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	// try to update the timer system to be more stateful/actually follow React paradigms in the future
 	const default_dataset_size = 15;
 	const dataset_model = React.useRef(
@@ -52,6 +53,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 				dataset_model.current.generate_new_operation()
 			)
 		);
+
 	const [step, setStep] = React.useState<ChartData>({
 		labels: [0, 1, 2, 3],
 		datasets: [
@@ -242,7 +244,7 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 				padding={{ xs: "0.5em", md: "5%" }}
 				width={{ xs: "100%", md: "60%" }}
 			>
-				<SortingChartContainer chart_data={step} />
+				<SortingChartContainer chart_data={steps_model?.get_chart_dataset()} />
 			</Box>
 
 			<Stack
@@ -274,5 +276,95 @@ const AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		</TallStack>
 	);
 };
+
+type AlgoSimProps = {
+	sorting_operation_factory: SortingOperationGenerator;
+};
+type AlgoSimState = {
+	timer_instance?: number;
+	
+	running: boolean;
+	complete: boolean;
+
+	data_set_size: number;
+	steps_controller: SortingOperationController;
+	step_message_history: number[];
+	algorithm: Algorithms;
+
+	speed: Speed;	
+};
+class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
+	constructor(props: AlgoSimProps)
+	{
+		super(props);
+		let start_alg: Algorithms = "Bubble Sort"; 
+		this.props.sorting_operation_factory.current_algorithm = start_alg;
+
+		this.state = {
+			// optional second annotation for better type inference
+			running: false,
+			complete: false,
+	
+			data_set_size: 15,
+			step_message_history: [0],
+	
+			steps_controller: new SortingOperationController(this.props.sorting_operation_factory.generate_new_operation()),
+			algorithm: start_alg,
+			
+			speed: Speed.FAST,
+		};
+	}
+
+	retry_sim(){
+				
+	}
+
+	render() {
+		return (
+			<TallStack
+			direction={{ xs: "column", md: "row" }}
+			alignContent="flex-start"
+			spacing={{ xs: 0, md: 0 }}
+		>
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems={"center"}
+				padding={{ xs: "0.5em", md: "5%" }}
+				width={{ xs: "100%", md: "60%" }}
+			>
+				<SortingChartController step_controller={this.state.steps_controller} step={0} />
+			</Box>
+
+			<Stack
+				justifyContent={{ xs: "center", md: "flex-end" }}
+				alignItems={"center"}
+				width={{ xs: "100%", md: "40%" }}
+				spacing={{ xs: 2, md: 2 }}
+			>
+				<AlgoSwitch current_alg={this.state.algorithm} handle_change={this.handle_alg_change} />
+				<SortingChartButtonRow
+					retry={this.retry_sim}
+					randomize={this.randomize_sim}
+					next_step={this.next_step}
+					toggle_run={this.handle_toggle_run}
+					run_state={this.state.running}
+					complete_state={this.state.complete}
+				/>
+				<SortingSpeedBar
+					handle_speed_change={this.handle_speed_change}
+					run_state={this.state.running}
+				/>
+				<Box width={"100%"} height="50%">
+					<SortingChartMessageBox
+						messages={this.state.steps_model.messages}
+						message_ind_history={this.state.step_message_history}
+					/>
+				</Box>
+			</Stack>
+		</TallStack>
+		);
+	}
+}
 
 export default AlgoSimPlayer;

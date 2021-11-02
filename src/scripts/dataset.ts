@@ -46,9 +46,9 @@ export class SortingOperationGenerator {
     private data_y: number[]; // Actual sorting
 
     private readonly algorithms: AlgorithmData;
-    public current_algorithm: Algorithms;
+    public current_algorithm: Algorithms = "Bubble Sort";
 
-    constructor(init_algorithm: Algorithms, dataset_size?: number) {
+    constructor(init_algorithm?: Algorithms, dataset_size?: number) {
         if (dataset_size) this.data_set_size = dataset_size;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
@@ -60,7 +60,10 @@ export class SortingOperationGenerator {
             "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
         }
 
-        this.current_algorithm = init_algorithm;
+        if (init_algorithm)
+        {
+            this.current_algorithm = init_algorithm;
+        }
     }
 
     private gen_random_int_inclusive(min: number, max: number): number {
