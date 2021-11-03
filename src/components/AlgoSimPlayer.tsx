@@ -3,7 +3,7 @@ import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
 
 import {
-	SortingOperationGenerator,
+	SortingOperationFactory,
 	SortingOperationController,
 	Algorithms,
 } from "../scripts/dataset";
@@ -15,7 +15,7 @@ import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
 import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
-import { SortingChartController } from "./SortingChart/SortingChartController";
+import { Oldtimey } from "../scripts/oldtimey";
 
 export enum Speed {
 	SLOW = 2,
@@ -35,12 +35,11 @@ const TallStack = styled(Stack)(({ theme }) => ({
 	backgroundColor: theme.palette.background.default,
 }));
 
+/*
 const _AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 	// try to update the timer system to be more stateful/actually follow React paradigms in the future
 	const default_dataset_size = 15;
-	const dataset_model = React.useRef(
-		new SortingOperationGenerator(starting_alg, default_dataset_size)
-	);
+	const dataset_model = React.useRef(new SortingOperationFactory(15));
 
 	const timer_instance = React.useRef<number | undefined>(undefined);
 
@@ -276,93 +275,172 @@ const _AlgoSimPlayer = ({ starting_alg }: SimPlayerProps) => {
 		</TallStack>
 	);
 };
+*/
 
 type AlgoSimProps = {
-	sorting_operation_factory: SortingOperationGenerator;
+	sorting_operation_factory: SortingOperationFactory;
 };
 type AlgoSimState = {
-	timer_instance?: number;
-	
+	timer_instance: Oldtimey;
+
 	running: boolean;
 	complete: boolean;
 
 	data_set_size: number;
 	steps_controller: SortingOperationController;
+	step: ChartData;
 	step_message_history: number[];
 	algorithm: Algorithms;
 
-	speed: Speed;	
+	speed: Speed;
 };
 class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
-	constructor(props: AlgoSimProps)
-	{
+	constructor(props: AlgoSimProps) {
 		super(props);
-		let start_alg: Algorithms = "Bubble Sort"; 
-		this.props.sorting_operation_factory.current_algorithm = start_alg;
+		const start_alg: Algorithms = "Bubble Sort";
+		const set_len = 15;
+
+		this.props.sorting_operation_factory.set_dataset_size(set_len);
+		let operation =
+			this.props.sorting_operation_factory.generate_new_operation(start_alg);
+		let controller = new SortingOperationController(operation);
 
 		this.state = {
-			// optional second annotation for better type inference
+			timer_instance: new Oldtimey(),
 			running: false,
 			complete: false,
-	
-			data_set_size: 15,
+
+			data_set_size: set_len,
 			step_message_history: [0],
-	
-			steps_controller: new SortingOperationController(this.props.sorting_operation_factory.generate_new_operation()),
+
+			steps_controller: controller,
+			step: controller.get_chart_dataset(),
+
 			algorithm: start_alg,
-			
+
 			speed: Speed.FAST,
 		};
+
+		this.retry_sim = this.retry_sim.bind(this);
+		this.next_step = this.next_step.bind(this);
+		this.randomize_sim = this.randomize_sim.bind(this);
+		this.alg_change = this.alg_change.bind(this);
+		this.toggle_run = this.toggle_run.bind(this);
+		this.toggle_run_timer = this.toggle_run_timer.bind(this);
 	}
 
-	retry_sim(){
-				
+	retry_sim() {
+		let initstep = this.state.steps_controller.retry();
+		this.setState({ step: initstep });
+	}
+
+	next_step() {
+		let new_step = this.state.steps_controller.next_step();
+		let new_history = this.state.steps_controller.message_history;
+
+		this.setState({ step: new_step, step_message_history: new_history });
+	}
+
+	randomize_sim() {
+		const new_operation =
+			this.props.sorting_operation_factory.generate_new_operation(
+				this.state.algorithm
+			);
+		let new_controller = new SortingOperationController(new_operation);
+		let init_step = new_controller.get_chart_dataset();
+
+		this.setState({
+			steps_controller: new_controller,
+			step: init_step,
+			complete: false,
+			running: false,
+			step_message_history: new_controller.message_history,
+		});
+	}
+
+	alg_change(event: SelectChangeEvent) {
+		let val = event.target.value;
+		let alg: Algorithms = val as Algorithms;
+
+		const new_operation =
+			this.props.sorting_operation_factory.regenerate_operation(alg);
+
+		let new_controller = new SortingOperationController(new_operation);
+		let init_step = new_controller.get_chart_dataset();
+
+		this.setState({
+			algorithm: alg,
+			step: init_step,
+			step_message_history: new_controller.message_history,
+			running: false,
+			complete: false,
+		});
+	}
+
+	toggle_run_timer() {
+		let newtimey: Oldtimey;
+
+		if (this.state.running) {
+			newtimey = new Oldtimey(this.next_step);
+			newtimey.start_timer();
+		} else {
+			this.state.timer_instance.stop_timer();
+			newtimey = new Oldtimey();
+		}
+	}
+
+	toggle_run(_: React.MouseEvent<HTMLElement>, run_state: boolean): void {
+		if (run_state !== null) {
+			if (run_state === this.state.running) {
+				return;
+			}
+
+			this.setState({ running: run_state }, this.toggle_run_timer);
+		}
 	}
 
 	render() {
 		return (
 			<TallStack
-			direction={{ xs: "column", md: "row" }}
-			alignContent="flex-start"
-			spacing={{ xs: 0, md: 0 }}
-		>
-			<Box
-				display="flex"
-				justifyContent="center"
-				alignItems={"center"}
-				padding={{ xs: "0.5em", md: "5%" }}
-				width={{ xs: "100%", md: "60%" }}
+				direction={{ xs: "column", md: "row" }}
+				alignContent="flex-start"
+				spacing={{ xs: 0, md: 0 }}
 			>
-				<SortingChartController step_controller={this.state.steps_controller} step={0} />
-			</Box>
-
-			<Stack
-				justifyContent={{ xs: "center", md: "flex-end" }}
-				alignItems={"center"}
-				width={{ xs: "100%", md: "40%" }}
-				spacing={{ xs: 2, md: 2 }}
-			>
-				<AlgoSwitch current_alg={this.state.algorithm} handle_change={this.handle_alg_change} />
-				<SortingChartButtonRow
-					retry={this.retry_sim}
-					randomize={this.randomize_sim}
-					next_step={this.next_step}
-					toggle_run={this.handle_toggle_run}
-					run_state={this.state.running}
-					complete_state={this.state.complete}
-				/>
-				<SortingSpeedBar
-					handle_speed_change={this.handle_speed_change}
-					run_state={this.state.running}
-				/>
-				<Box width={"100%"} height="50%">
-					<SortingChartMessageBox
-						messages={this.state.steps_model.messages}
-						message_ind_history={this.state.step_message_history}
-					/>
+				<Box
+					display="flex"
+					justifyContent="center"
+					alignItems={"center"}
+					padding={{ xs: "0.5em", md: "5%" }}
+					width={{ xs: "100%", md: "60%" }}
+				>
+					<SortingChartContainer chart_data={this.state.step} />
 				</Box>
-			</Stack>
-		</TallStack>
+				<Stack
+					justifyContent={{ xs: "center", md: "flex-end" }}
+					alignItems={"center"}
+					width={{ xs: "100%", md: "40%" }}
+					spacing={{ xs: 2, md: 2 }}
+				>
+					<AlgoSwitch
+						current_alg={this.state.algorithm}
+						handle_change={this.alg_change}
+					/>
+					<SortingChartButtonRow
+						retry={this.retry_sim}
+						randomize={this.randomize_sim}
+						next_step={this.next_step}
+						toggle_run={this.toggle_run}
+						run_state={this.state.running}
+						complete_state={this.state.complete}
+					/>
+					<Box width={"100%"} height="50%">
+						<SortingChartMessageBox
+							messages={this.state.steps_controller.messages}
+							message_ind_history={this.state.step_message_history}
+						/>
+					</Box>
+				</Stack>
+			</TallStack>
 		);
 	}
 }

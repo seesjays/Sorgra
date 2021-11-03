@@ -38,17 +38,16 @@ export type Algorithms = "Bubble Sort" | "Selection Sort";
 
 type AlgorithmData = Record<Algorithms, algorithm>;
 
-export class SortingOperationGenerator {
-    data_set_size: number = 20;
+export class SortingOperationFactory {
+    private data_set_size: number = 20;
 
     private data_x: number[];
     private data_original: number[]; // Returning to original dataset
     private data_y: number[]; // Actual sorting
 
     private readonly algorithms: AlgorithmData;
-    public current_algorithm: Algorithms = "Bubble Sort";
 
-    constructor(init_algorithm?: Algorithms, dataset_size?: number) {
+    constructor(dataset_size?: number) {
         if (dataset_size) this.data_set_size = dataset_size;
 
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
@@ -58,11 +57,6 @@ export class SortingOperationGenerator {
         this.algorithms = {
             "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
             "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
-        }
-
-        if (init_algorithm)
-        {
-            this.current_algorithm = init_algorithm;
         }
     }
 
@@ -192,23 +186,19 @@ export class SortingOperationGenerator {
         this.data_original = [...this.data_y];
     }
 
-    get name(): string {
-        return this.current_algorithm;
-    }
-
-    public generate_new_operation(): SortingOperation {
+    public generate_new_operation(alg: Algorithms): SortingOperation {
         this.randomize_y();
-        return this.algorithms[this.current_algorithm].generate();
+
+        return this.algorithms[alg].generate();
     }
 
-    public regenerate_operation(): SortingOperation {
+    public regenerate_operation(alg: Algorithms): SortingOperation {
         this.return_to_original();
-        let out = this.algorithms[this.current_algorithm].generate(); 
-        
-        return out; 
+
+        return this.algorithms[alg].generate(); 
     }
 
-    public change_dataset_size(size: number): void {
+    public set_dataset_size(size: number): void {
         if (size < 5 || size > 20) {
             return;
         }
