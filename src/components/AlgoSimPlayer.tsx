@@ -281,7 +281,7 @@ type AlgoSimProps = {
 	sorting_operation_factory: SortingOperationFactory;
 };
 type AlgoSimState = {
-	timer_instance: Oldtimey;
+	timer_instance: number;
 
 	running: boolean;
 	complete: boolean;
@@ -306,7 +306,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		let controller = new SortingOperationController(operation);
 
 		this.state = {
-			timer_instance: new Oldtimey(),
+			timer_instance: -1,
 			running: false,
 			complete: false,
 
@@ -334,11 +334,20 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		this.setState({ step: initstep });
 	}
 
-	next_step() {
+	next_step(invoker: 'button' | 'timer') {
+		if (invoker === 'timer')
+		{
+			if (!this.state.running)
+			{
+				return false;
+			}
+		}
+
 		let new_step = this.state.steps_controller.next_step();
 		let new_history = this.state.steps_controller.message_history;
 
 		this.setState({ step: new_step, step_message_history: new_history });
+		return true;
 	}
 
 	randomize_sim() {
@@ -381,10 +390,9 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		let newtimey: Oldtimey;
 
 		if (this.state.running) {
-			newtimey = new Oldtimey(this.next_step);
+			newtimey = new Oldtimey();
 			newtimey.start_timer();
 		} else {
-			this.state.timer_instance.stop_timer();
 			newtimey = new Oldtimey();
 		}
 	}
@@ -396,6 +404,61 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			}
 
 			this.setState({ running: run_state }, this.toggle_run_timer);
+		}
+	}
+
+	set_timer_inst(instance: number)
+	{
+		this.setState({timer_instance: instance});
+	}
+
+	timeordeal(): void {
+		if (this.state.complete || this.state.steps_controller.complete) {
+			console.log(`${this.state.algorithm} Complete`);
+
+			clearTimeout(this.state.timer_instance);
+
+			this.setState({ complete: true, running: false });
+			return;
+		} else if (!this.state.running) {
+			console.log(`${this.state.algorithm} Paused`);
+
+			clearTimeout(this.state.timer_instance);
+			
+			this.setState({ running: false });
+			return;
+		}
+
+		let ivl = this.state.speed * 1000; // ms
+		let exd = Date.now() + ivl;
+
+		this.setState({ timer_instance: setTimeout(time_step, ivl, ivl, exd) })
+
+		function time_step(interval: number, initexpect: number) {
+			let dt = Date.now() - initexpect; // the drift (positive for overshooting)
+			if (dt > interval) {
+				// pause
+				// console.log("timer miss");
+
+				clearInterval(timer_instance.current);
+				toggle_run(false);
+				next_step(false);
+
+				return;
+			} else {
+				//console.log("timer ping");
+				next_step(false);
+			}
+			//console.log("delta: " + dt);
+			//console.log("diff: " + Math.max(0, interval - dt));
+
+			initexpect += interval;
+			timer_instance.current = setTimeout(
+				time_step,
+				Math.max(0, interval - dt),
+				interval,
+				initexpect
+			);
 		}
 	}
 
@@ -428,7 +491,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 					<SortingChartButtonRow
 						retry={this.retry_sim}
 						randomize={this.randomize_sim}
-						next_step={this.next_step}
+						next_step={() => this.next_step("button")}
 						toggle_run={this.toggle_run}
 						run_state={this.state.running}
 						complete_state={this.state.complete}
