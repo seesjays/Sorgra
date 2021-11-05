@@ -50,9 +50,10 @@ export class SortingOperationFactory {
     constructor(dataset_size?: number) {
         if (dataset_size) this.data_set_size = dataset_size;
 
-        this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
-        this.data_y = this.generate_yvals();
-        this.data_original = [...this.data_y];
+        this.data_x = [];
+        this.data_y = [];
+        this.data_original = [];
+        this.populate_datasets();
 
         this.algorithms = {
             "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
@@ -74,6 +75,12 @@ export class SortingOperationFactory {
         }
 
         return outarr;
+    }
+
+    private populate_datasets(): void {
+        this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
+        this.data_y = this.generate_yvals();
+        this.data_original = [...this.data_y];
     }
 
     private return_to_original(): void {
@@ -204,6 +211,7 @@ export class SortingOperationFactory {
         }
 
         this.data_set_size = size;
+        this.populate_datasets();
     }
 }
 

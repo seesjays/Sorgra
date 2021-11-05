@@ -281,8 +281,6 @@ type AlgoSimProps = {
 	sorting_operation_factory: SortingOperationFactory;
 };
 type AlgoSimState = {
-	timer_instance: number;
-
 	running: boolean;
 	complete: boolean;
 
@@ -295,18 +293,21 @@ type AlgoSimState = {
 	speed: Speed;
 };
 class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
+	timer_instance: number;
+
 	constructor(props: AlgoSimProps) {
 		super(props);
 		const start_alg: Algorithms = "Bubble Sort";
-		const set_len = 15;
+		const set_len = 8;
 
 		this.props.sorting_operation_factory.set_dataset_size(set_len);
 		let operation =
 			this.props.sorting_operation_factory.generate_new_operation(start_alg);
 		let controller = new SortingOperationController(operation);
 
+		this.timer_instance = -1;
+
 		this.state = {
-			timer_instance: -1,
 			running: false,
 			complete: false,
 
@@ -321,53 +322,80 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			speed: Speed.FAST,
 		};
 
+		this.randomize_sim = this.randomize_sim.bind(this);
 		this.retry_sim = this.retry_sim.bind(this);
 		this.next_step = this.next_step.bind(this);
-		this.randomize_sim = this.randomize_sim.bind(this);
+		this.check_completion = this.check_completion.bind(this);
+
 		this.alg_change = this.alg_change.bind(this);
+		this.speed_change = this.speed_change.bind(this);
+
 		this.toggle_run = this.toggle_run.bind(this);
 		this.toggle_run_timer = this.toggle_run_timer.bind(this);
+		this.timeordeal = this.timeordeal.bind(this);
 	}
 
-	retry_sim() {
+	retry_sim(): void {
 		let initstep = this.state.steps_controller.retry();
-		this.setState({ step: initstep });
+		this.setState({ step: initstep, complete: false, running: false, step_message_history: this.state.steps_controller.message_history });
 	}
 
-	next_step(invoker: 'button' | 'timer') {
-		if (invoker === 'timer')
-		{
-			if (!this.state.running)
-			{
-				return false;
+	// Creates new ChartData based off of the next step in the steps_controller.
+	// If the sim is already complete, does nothing.
+	next_step(invoker: "button" | "timer"): void {
+		// small error prevention
+		if (invoker === "timer") {
+			if (!this.state.running) {
+				this.setState({ complete: false });
+				return;
 			}
 		}
 
-		let new_step = this.state.steps_controller.next_step();
-		let new_history = this.state.steps_controller.message_history;
+		if (!this.state.complete) {
+			const new_step = this.state.steps_controller.next_step();
+			const new_history = this.state.steps_controller.message_history;
+			const still_run = invoker === "button" ? this.state.running : !this.state.steps_controller.complete;
 
-		this.setState({ step: new_step, step_message_history: new_history });
-		return true;
+			this.setState({
+				step: new_step,
+				step_message_history: new_history,
+				complete: this.state.steps_controller.complete,
+				running: still_run,
+			});
+		}
 	}
 
-	randomize_sim() {
+	check_completion(): void {
+		if (this.state.complete || this.state.steps_controller.complete) {
+			console.log(`${this.state.algorithm} Complete`);
+
+			clearTimeout(this.timer_instance);
+
+			this.setState({ complete: true, running: false });
+			return;
+		} else if (!this.state.running) {
+			console.log(`${this.state.algorithm} Paused`);
+
+			clearTimeout(this.timer_instance);
+
+			this.setState({ running: false });
+			return;
+		}
+	}
+
+	randomize_sim(): void {
 		const new_operation =
 			this.props.sorting_operation_factory.generate_new_operation(
 				this.state.algorithm
 			);
 		let new_controller = new SortingOperationController(new_operation);
-		let init_step = new_controller.get_chart_dataset();
 
 		this.setState({
 			steps_controller: new_controller,
-			step: init_step,
-			complete: false,
-			running: false,
-			step_message_history: new_controller.message_history,
-		});
+		}, this.retry_sim);
 	}
 
-	alg_change(event: SelectChangeEvent) {
+	alg_change(event: SelectChangeEvent): void {
 		let val = event.target.value;
 		let alg: Algorithms = val as Algorithms;
 
@@ -375,28 +403,18 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			this.props.sorting_operation_factory.regenerate_operation(alg);
 
 		let new_controller = new SortingOperationController(new_operation);
-		let init_step = new_controller.get_chart_dataset();
 
 		this.setState({
+			steps_controller: new_controller,
 			algorithm: alg,
-			step: init_step,
-			step_message_history: new_controller.message_history,
-			running: false,
-			complete: false,
-		});
+		}, this.retry_sim);
 	}
 
-	toggle_run_timer() {
-		let newtimey: Oldtimey;
-
-		if (this.state.running) {
-			newtimey = new Oldtimey();
-			newtimey.start_timer();
-		} else {
-			newtimey = new Oldtimey();
-		}
+	speed_change(_: Event, value: number): void {
+		this.setState({ speed: value as Speed });
 	}
 
+	// Simlpy swaps run_state, then toggles the simulation timer
 	toggle_run(_: React.MouseEvent<HTMLElement>, run_state: boolean): void {
 		if (run_state !== null) {
 			if (run_state === this.state.running) {
@@ -407,59 +425,58 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		}
 	}
 
-	set_timer_inst(instance: number)
-	{
-		this.setState({timer_instance: instance});
+	// Responsible for actually initiating/ending the
+	// simulation timer based off of run_state
+	toggle_run_timer(): void {
+		if (this.state.running) {
+			this.timeordeal();
+		} else {
+			clearTimeout(this.timer_instance);
+		}
 	}
 
+	// Why is this called 'timeordeal'? Because I am a solo dev,
+	// and thus, I shalt create cool names if I so desire.
+	// And developing this was a tedious ordeal.
+
+	// Ad essentium, not even I am entirely sure about the mechanism by which this functions.
+	// I understand the prnciples and function of a self-adjusting timer, which is essentially what this class component
+	// becomes after executing timeordeal. Either way, this is the most 'Reactive' way I could derive of to create
+	// a simulation timer. the Oldtimey class attempted to solve the issue of a timer in React, but I couldn't derivate a solution
+	// to the 'this' problem in a self-calling timer.
 	timeordeal(): void {
-		if (this.state.complete || this.state.steps_controller.complete) {
-			console.log(`${this.state.algorithm} Complete`);
-
-			clearTimeout(this.state.timer_instance);
-
-			this.setState({ complete: true, running: false });
-			return;
-		} else if (!this.state.running) {
-			console.log(`${this.state.algorithm} Paused`);
-
-			clearTimeout(this.state.timer_instance);
-			
-			this.setState({ running: false });
-			return;
-		}
-
 		let ivl = this.state.speed * 1000; // ms
-		let exd = Date.now() + ivl;
+		let expected = Date.now() + ivl;
 
-		this.setState({ timer_instance: setTimeout(time_step, ivl, ivl, exd) })
-
-		function time_step(interval: number, initexpect: number) {
+		let time_step = (interval: number, initexpect: number) => {
 			let dt = Date.now() - initexpect; // the drift (positive for overshooting)
 			if (dt > interval) {
 				// pause
 				// console.log("timer miss");
 
-				clearInterval(timer_instance.current);
-				toggle_run(false);
-				next_step(false);
+				clearInterval(this.timer_instance);
+				this.setState({ complete: false, running: false });
 
 				return;
 			} else {
 				//console.log("timer ping");
-				next_step(false);
+				this.next_step("timer");
 			}
 			//console.log("delta: " + dt);
 			//console.log("diff: " + Math.max(0, interval - dt));
 
 			initexpect += interval;
-			timer_instance.current = setTimeout(
+			this.timer_instance = setTimeout(
 				time_step,
 				Math.max(0, interval - dt),
 				interval,
 				initexpect
 			);
-		}
+
+			this.check_completion();
+		};
+
+		this.timer_instance = setTimeout(time_step, ivl, ivl, expected);
 	}
 
 	render() {
@@ -495,6 +512,10 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 						toggle_run={this.toggle_run}
 						run_state={this.state.running}
 						complete_state={this.state.complete}
+					/>
+					<SortingSpeedBar
+						handle_speed_change={this.speed_change}
+						run_state={this.state.running}
 					/>
 					<Box width={"100%"} height="50%">
 						<SortingChartMessageBox
