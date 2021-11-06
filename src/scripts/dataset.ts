@@ -1,7 +1,7 @@
 import { ChartData } from "chart.js";
 
 
-enum HIGHLIGHT_TYPE {
+export enum HIGHLIGHT_TYPE {
     BASE,
     DISCREPANCY,
     CORRECTED,
@@ -99,7 +99,7 @@ export class SortingOperationFactory {
             clear = true;
             for (let i = 0; i < this.data_set_size - 1; i++) {
                 if (this.data_y[i] > this.data_y[i + 1]) {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }], message: 2 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.DISCREPANCY, indices: [i, i + 1] }], message: 2 });
 
                     let temp = this.data_y[i + 1];
                     this.data_y[i + 1] = this.data_y[i];
@@ -110,10 +110,10 @@ export class SortingOperationFactory {
 
                     clear = false;
 
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }], message: 3, changes: [replace_higher_with_lower, restore_higher_from_temp] });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [i, i + 1] }], message: 3, changes: [replace_higher_with_lower, restore_higher_from_temp] });
                 }
                 else {
-                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }], message: 1 });
+                    sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [i, i + 1] }], message: 1 });
                 }
             }
         }
@@ -228,8 +228,8 @@ export class SortingOperationController {
     public step_counter: number;
 
     public messages: string[];
-    public message_history: number[];
-
+    public message_history: [number[], HIGHLIGHT_TYPE[]];
+    
     public complete: boolean = false;
 
 
@@ -245,7 +245,7 @@ export class SortingOperationController {
         else {
             this.messages = ["Undocumented Step"];
         }
-        this.message_history = [0];
+        this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
 
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.data_x = Array.from({ length: this.operation.data_y.length }, (_, i) => i + 1);
@@ -304,15 +304,22 @@ export class SortingOperationController {
         }
     }
 
+    private reset_message_history(): void {
+        this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
+    }
+
     public next_step(): ChartData {
         if (!this.complete) {
             this.step_counter += 1;
             this.highlight_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
-            this.message_history.push(this.operation.steps[this.step_counter].message);
+            this.message_history[0].push(this.operation.steps[this.step_counter].message);
+            this.message_history[1].push(this.operation.steps[this.step_counter].highlights[0].color);
 
-            if (this.message_history.length > 3) {
-                this.message_history.shift();
+
+            if (this.message_history[0].length > 3 || this.message_history[1].length > 3) {
+                this.message_history[0].shift();
+                this.message_history[1].shift();
             }
         }
 
@@ -329,7 +336,7 @@ export class SortingOperationController {
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
         this.step_counter = 0;
         this.operation.data_y = [...this.data_y_original];
-        this.message_history = [0];
+        this.reset_message_history();
 
 
         return this.get_chart_dataset();

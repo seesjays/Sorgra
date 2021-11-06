@@ -6,6 +6,7 @@ import {
 	SortingOperationFactory,
 	SortingOperationController,
 	Algorithms,
+	HIGHLIGHT_TYPE,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
 import { SelectChangeEvent, Stack } from "@mui/material";
@@ -287,7 +288,7 @@ type AlgoSimState = {
 	data_set_size: number;
 	steps_controller: SortingOperationController;
 	step: ChartData;
-	step_message_history: number[];
+	step_message_history: [number[], HIGHLIGHT_TYPE[]];
 	algorithm: Algorithms;
 
 	speed: Speed;
@@ -312,7 +313,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			complete: false,
 
 			data_set_size: set_len,
-			step_message_history: [0],
+			step_message_history: [[0], [HIGHLIGHT_TYPE.BASE]],
 
 			steps_controller: controller,
 			step: controller.get_chart_dataset(),
