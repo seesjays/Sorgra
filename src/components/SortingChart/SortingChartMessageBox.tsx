@@ -14,11 +14,17 @@ const StyledMessageBox = styled(Stack)(({ theme }) => ({
 	width: "100%",
 	padding: "1rem",
 	display: "flex",
-	justifyContent: "center",
 	border: `2px solid ${theme.palette.primary}`,
 }));
 
-const cols = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(194, 147, 233)", "rgb(204, 185, 116)"];
+const cols = [
+	"rgb(76, 114, 176)",
+	"rgb(196, 78, 82)",
+	"rgb(85, 168, 104)",
+	"rgb(76, 174, 255)",
+	"rgb(194, 147, 233)",
+	"rgb(204, 185, 116)",
+];
 
 type SortingChartMessageBoxProps = {
 	messages: string[];
@@ -30,14 +36,33 @@ export default function SortingChartMessageBox(
 	let hist = props.message_ind_history[0];
 
 	const messages = hist.map((ind, index) => (
-		<Paper variant="outlined" sx={{ width: "100%", padding: "0.75em" }}>
-			<Typography sx={{fontSize: "1.25em", borderLeft: `4px solid ${cols[props.message_ind_history[1][index]]}`}}>{props.messages?.[ind]}</Typography>
-		</Paper>
+		<React.Fragment>
+			<ListItem>
+				<Typography
+					sx={{
+						fontSize: "1.25em",
+						borderLeft: `4px solid ${
+							cols[props.message_ind_history[1][index]]
+						}`,
+					}}
+				>
+					{props.messages?.[ind]}
+				</Typography>
+			</ListItem>
+			<Divider sx={{ display: {(index < props.message_ind_history.length) ? "initial" : "none"} }}/>
+		</React.Fragment>
 	));
 
 	return (
-		<StyledMessageBox spacing={3} flexDirection={"column-reverse"} width={"100%"} bgcolor={"background.paper"}>
-			{messages}
+		<StyledMessageBox
+			spacing={0}
+			flexDirection={"column-reverse"}
+			width={"100%"}
+			bgcolor={"background.paper"}
+		>
+			<Paper variant="outlined" sx={{ width: "100%", padding: "0.75em" }}>
+				{messages}
+			</Paper>
 		</StyledMessageBox>
 	);
 }
