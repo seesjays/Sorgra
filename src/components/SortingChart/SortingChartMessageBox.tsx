@@ -10,11 +10,13 @@ import { Paper, Typography } from "@mui/material";
 import { width } from "@mui/system";
 import { HIGHLIGHT_TYPE } from "../../scripts/dataset";
 
-const StyledMessageBox = styled(Stack)(({ theme }) => ({
-	width: "100%",
+const StyledPaper = styled(Paper)(({ theme }) => ({
+	width: "90%",
+	margin: "0 auto",
 	padding: "1rem",
 	display: "flex",
-	border: `2px solid ${theme.palette.primary}`,
+	flexDirection: "column-reverse",
+	border: `2px solid ${theme.palette.primary.main}`,
 }));
 
 const cols = [
@@ -33,36 +35,28 @@ type SortingChartMessageBoxProps = {
 export default function SortingChartMessageBox(
 	props: SortingChartMessageBoxProps
 ) {
-	let hist = props.message_ind_history[0];
+	let hist = props.message_ind_history[0];	
 
 	const messages = hist.map((ind, index) => (
-		<React.Fragment>
-			<ListItem>
-				<Typography
-					sx={{
-						fontSize: "1.25em",
-						borderLeft: `4px solid ${
-							cols[props.message_ind_history[1][index]]
-						}`,
-					}}
-				>
-					{props.messages?.[ind]}
-				</Typography>
+		<React.Fragment key={index}>
+			<ListItem
+				sx={{
+					fontSize: "1.25em",
+					padding: "0.5rem 0.5rem",
+					margin: "0.2em 0",
+					borderLeft: `4px solid ${cols[props.message_ind_history[1][index]]}`,
+				}}
+			>
+				<Typography fontSize={"1.25em"}>{props.messages?.[ind]}</Typography>
 			</ListItem>
-			<Divider sx={{ display: {(index < props.message_ind_history.length) ? "initial" : "none"} }}/>
+			<Divider
+				sx={{
+					display:
+						((index < props.message_ind_history[0].length-1) && (props.message_ind_history[0].length > 1)) ? "initial" : "none",
+				}}
+			/>
 		</React.Fragment>
 	));
 
-	return (
-		<StyledMessageBox
-			spacing={0}
-			flexDirection={"column-reverse"}
-			width={"100%"}
-			bgcolor={"background.paper"}
-		>
-			<Paper variant="outlined" sx={{ width: "100%", padding: "0.75em" }}>
-				{messages}
-			</Paper>
-		</StyledMessageBox>
-	);
+	return <StyledPaper variant="outlined">{messages}</StyledPaper>;
 }

@@ -89,7 +89,7 @@ export class SortingOperationFactory {
 
     private generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
-        const messages = ["Bubble Sort", "Searching for a pair in which left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
+        const messages = ["Bubble Sort", "Searching for a pair where left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
 
         let clear = false;
 
