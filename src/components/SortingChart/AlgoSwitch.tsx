@@ -22,6 +22,8 @@ export function AlgoSwitch({ current_alg, handle_change }: AlgoSwitchProps) {
 			>
 				<MenuItem value={"Bubble Sort"}>Bubble Sort</MenuItem>
 				<MenuItem value={"Selection Sort"}>Selection Sort</MenuItem>
+				<MenuItem value={"Insertion Sort"}>Insertion Sort</MenuItem>
+				<MenuItem value={"Quick Sort"}>Quick Sort</MenuItem>
 			</Select>
 		</FormControl>
 	);

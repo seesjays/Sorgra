@@ -1,4 +1,5 @@
 import { ChartData } from "chart.js";
+import { ColorMapping, ColorMap } from "./colormap";
 
 
 export enum HIGHLIGHT_TYPE {
@@ -8,6 +9,12 @@ export enum HIGHLIGHT_TYPE {
     SEEKING,
     SEEKING_ALT,
     SELECTED,
+    DIM_BASE,
+    DIM_DISCREPANCY,
+    DIM_CORRECTED,
+    DIM_SEEKING,
+    DIM_SEEKING_ALT,
+    DIM_SELECTED,
 }
 
 type HighlightedIndex = {
@@ -34,7 +41,7 @@ interface algorithm {
     generate(): SortingOperation;
 }
 
-export type Algorithms = "Bubble Sort" | "Selection Sort";
+export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort";
 
 type AlgorithmData = Record<Algorithms, algorithm>;
 
@@ -58,6 +65,8 @@ export class SortingOperationFactory {
         this.algorithms = {
             "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
             "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
+            "Insertion Sort": { generate: () => this.generate_insertionsort_steps() },
+            "Quick Sort": { generate: () => this.generate_quicksort_steps() }
         }
     }
 
@@ -89,7 +98,7 @@ export class SortingOperationFactory {
 
     private generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
-        const messages = ["Bubble Sort", "Searching for a pair where left > right.", "Detected a pair of misplaced values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
+        const messages = ["Bubble Sort", "Searching for a pair where left > right.", "Detected a pair of misordered values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
 
         let clear = false;
 
@@ -150,7 +159,7 @@ export class SortingOperationFactory {
             for (let j = i + 1; j < data_length; j++) {
                 if (this.data_y[j] < this.data_y[j_min]) {
                     j_min = j;
-                    step = { highlights: [{ color: HIGHLIGHT_TYPE.SEEKING, indices: [j] }, { color: HIGHLIGHT_TYPE.SEEKING_ALT, indices: [j_min] }, { color: HIGHLIGHT_TYPE.SELECTED, indices: [i] }], message: 3 };
+                    step = { highlights: [{ color: HIGHLIGHT_TYPE.SEEKING_ALT, indices: [j] }, { color: HIGHLIGHT_TYPE.SELECTED, indices: [i] }], message: 3 };
                     sort_steps.push(step);
                 }
                 else {
@@ -188,6 +197,102 @@ export class SortingOperationFactory {
         return { name: "Selection Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
+    private generate_insertionsort_steps(): SortingOperation {
+        let sort_steps: SortStep[] = [];
+        const messages = ["Insertion Sort",
+            "Incremented selection.",
+            "Searching for a pair where selection < left.",
+            "Selection > left, swapping until left > selection.",
+            "Swap complete.",
+            "Selection is in the proper place.",
+            "Insertion Sort: Complete"];
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+        let step: SortStep = { highlights: [{ color: HIGHLIGHT_TYPE.SELECTED, indices: [1] },], message: 1 };
+        sort_steps.push(step);
+
+        for (let i = 1; i < this.data_y.length; i++) {
+            let j = i;
+
+            let step: SortStep = {
+                highlights:
+                    [{
+                        color: HIGHLIGHT_TYPE.SEEKING,
+                        indices: [j - 1]
+                    }, {
+                        color: HIGHLIGHT_TYPE.SELECTED,
+                        indices: [j]
+                    }
+                    ],
+                message: 2
+            };
+            sort_steps.push(step);
+
+
+            while (j > 0 && this.data_y[j - 1] > this.data_y[j]) {
+                let step: SortStep = {
+                    highlights:
+                        [{
+                            color: HIGHLIGHT_TYPE.DISCREPANCY,
+                            indices: [j - 1]
+                        }, {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [j]
+                        }],
+                    message: 3
+                };
+                sort_steps.push(step);
+
+                let temp = this.data_y[j];
+                this.data_y[j] = this.data_y[j - 1];
+                let replace_j_with_lower: [number, number] = [j, this.data_y[j]];
+
+                this.data_y[j - 1] = temp;
+                let restore_lower_from_temp: [number, number] = [j - 1, temp];
+
+                step = {
+                    highlights:
+                        [{
+                            color: HIGHLIGHT_TYPE.CORRECTED,
+                            indices: [j]
+                        }, {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [j - 1]
+                        }],
+                    message: 4,
+                    changes: [replace_j_with_lower, restore_lower_from_temp],
+                };
+                sort_steps.push(step);
+
+                j -= 1;
+            }
+
+            step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [j] }], message: 5 }
+            sort_steps.push(step);
+        }
+
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 6 }
+        sort_steps.push(step);
+        this.return_to_original();
+
+        return { name: "Insertion Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
+    private generate_quicksort_steps(): SortingOperation {
+        let sort_steps: SortStep[] = [];
+        const messages = ["Quick Sort", 
+        "Selected new pivot index.", 
+        "Swapped the misordered values.", 
+        "Quick Sort: Complete"];
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+        this.return_to_original();
+
+        return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
     private randomize_y(): void {
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
@@ -202,7 +307,7 @@ export class SortingOperationFactory {
     public regenerate_operation(alg: Algorithms): SortingOperation {
         this.return_to_original();
 
-        return this.algorithms[alg].generate(); 
+        return this.algorithms[alg].generate();
     }
 
     public set_dataset_size(size: number): void {
@@ -217,7 +322,7 @@ export class SortingOperationFactory {
 
 export class SortingOperationController {
     private operation: SortingOperation;
-    private highlight_cols: string[] = ["rgb(76, 114, 176)", "rgb(196, 78, 82)", "rgb(85, 168, 104)", "rgb(76, 174, 255)", "rgb(194, 147, 233)", "rgb(204, 185, 116)"];
+    private highlight_cols: ColorMapping;
     private data_highlights: string[]; // Highlight diffing
 
     private data_x: number[];
@@ -228,8 +333,9 @@ export class SortingOperationController {
     public step_counter: number;
 
     public messages: string[];
+    private message_history_len: number;
     public message_history: [number[], HIGHLIGHT_TYPE[]];
-    
+
     public complete: boolean = false;
 
 
@@ -245,9 +351,11 @@ export class SortingOperationController {
         else {
             this.messages = ["Undocumented Step"];
         }
+        this.message_history_len = 5;
         this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
+        this.highlight_cols = ColorMap;
 
-        this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
+        this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
         this.data_x = Array.from({ length: this.operation.data_y.length }, (_, i) => i + 1);
         this.data_y_original = [...operation.data_y];
     }
@@ -313,14 +421,16 @@ export class SortingOperationController {
             this.step_counter += 1;
             this.highlight_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
-            this.message_history[0].push(this.operation.steps[this.step_counter].message);
-            this.message_history[1].push(this.operation.steps[this.step_counter].highlights[0].color);
+            this.message_history[0].unshift(this.operation.steps[this.step_counter].message);
+            this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);
 
 
-            if (this.message_history[0].length > 3 || this.message_history[1].length > 3) {
-                this.message_history[0].shift();
-                this.message_history[1].shift();
+            if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
+                this.message_history[0].pop();
+                this.message_history[1].pop();
             }
+
+            console.log(this.message_history[0])
         }
 
         if (this.step_counter === this.operation.steps.length - 1) {
@@ -333,7 +443,7 @@ export class SortingOperationController {
 
     public retry(): ChartData {
         this.complete = false;
-        this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[0]);
+        this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
         this.step_counter = 0;
         this.operation.data_y = [...this.data_y_original];
         this.reset_message_history();
