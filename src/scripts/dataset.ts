@@ -202,9 +202,9 @@ export class SortingOperationFactory {
         const messages = ["Insertion Sort",
             "Incremented selection.",
             "Searching for a pair where selection < left.",
-            "Selection > left, swapping until left > selection.",
+            "Selection < left, swapping until selection > left.",
             "Swap complete.",
-            "Selection is in the proper place.",
+            "Done moving selection.",
             "Insertion Sort: Complete"];
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -281,13 +281,95 @@ export class SortingOperationFactory {
 
     private generate_quicksort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
-        const messages = ["Quick Sort", 
-        "Selected new pivot index.", 
-        "Swapped the misordered values.", 
-        "Quick Sort: Complete"];
+        const messages = ["Quick Sort",
+            "Selected new pivot index.",
+            "Swapped the misordered values.",
+            "Quick Sort: Complete"];
 
         sort_steps.push({ highlights: [], message: 0 });
 
+        const partition = (start: number, end: number): number => {
+            let x = this.data_y[end];
+            let i = start - 1;
+            for (let j = start; j < end; j++) {
+                if (this.data_y[j] <= x) {
+                    i += 1;
+                    let temp = this.data_y[i];
+
+                    this.data_y[i] = this.data_y[j];
+                    let replace_j_with_lower: [number, number] = [i, this.data_y[i]];
+
+                    this.data_y[j] = temp;
+                    let restore_j_from_temp: [number, number] = [j, temp];
+
+                    let step: SortStep = {
+                        highlights:
+                            [{
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [i, j]
+                            }],
+                        message: 0,
+                    };
+                    sort_steps.push(step);
+
+                    step = {
+                        highlights:
+                            [{
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [i, j]
+                            }],
+                        message: 0,
+                        changes: [replace_j_with_lower, restore_j_from_temp],
+                    };
+                    sort_steps.push(step);
+                }
+            }
+
+            let step: SortStep = {
+                highlights:
+                    [{
+                        color: HIGHLIGHT_TYPE.DISCREPANCY,
+                        indices: [i + 1, end]
+                    }],
+                message: 0,
+            };
+            sort_steps.push(step);
+
+            let temp = this.data_y[i + 1];
+            this.data_y[i + 1] = this.data_y[end];
+            let replace_j_with_lower: [number, number] = [i + 1, this.data_y[i + 1]];
+
+            this.data_y[end] = temp;
+            let restore_end_from_temp: [number, number] = [end, temp];
+
+            step = {
+                highlights:
+                    [{
+                        color: HIGHLIGHT_TYPE.DISCREPANCY,
+                        indices: [i + 1, end]
+                    }],
+                message: 0,
+                changes: [replace_j_with_lower, restore_end_from_temp],
+            };
+            sort_steps.push(step);
+
+            return i + 1;
+        }
+
+        const quicksort = (start: number, end: number): void => {
+            if (start < end) {
+                const pivot_index: number = partition(start, end);
+
+                quicksort(start, pivot_index - 1);
+                quicksort(pivot_index + 1, end);
+            }
+        }
+
+        quicksort(0, this.data_y.length - 1);
+
+        let step: SortStep = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
+        sort_steps.push(step);
+        console.dir(this.data_y);
         this.return_to_original();
 
         return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
@@ -430,7 +512,7 @@ export class SortingOperationController {
                 this.message_history[1].pop();
             }
 
-            console.log(this.message_history[0])
+            // console.log(this.message_history[0])
         }
 
         if (this.step_counter === this.operation.steps.length - 1) {

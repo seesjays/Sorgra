@@ -13,7 +13,6 @@ import { ColorMap } from "../../scripts/colormap";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
 	width: "90%",
-	height: "100%",
 	margin: "0 auto",
 	padding: "1rem",
 	display: "flex",
