@@ -291,9 +291,41 @@ export class SortingOperationFactory {
         const partition = (start: number, end: number): number => {
             let x = this.data_y[end];
             let i = start - 1;
+
+            // highlight
+            let curr_part = (() => {
+                let inds: number[] = [];
+
+                for (let i = start; i < end; i++) {
+                    inds.push(i)
+                }
+
+                return inds;
+            })();
+
             for (let j = start; j < end; j++) {
                 if (this.data_y[j] <= x) {
                     i += 1;
+
+                    let step: SortStep = {
+                        highlights:
+                            [{
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: curr_part
+                            }, {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [i]
+                            }, {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: curr_part
+                            },
+                            ],
+                        message: 0,
+                    };
+
+                    sort_steps.push(step);
+
                     let temp = this.data_y[i];
 
                     this.data_y[i] = this.data_y[j];
@@ -302,22 +334,21 @@ export class SortingOperationFactory {
                     this.data_y[j] = temp;
                     let restore_j_from_temp: [number, number] = [j, temp];
 
-                    let step: SortStep = {
-                        highlights:
-                            [{
-                                color: HIGHLIGHT_TYPE.DISCREPANCY,
-                                indices: [i, j]
-                            }],
-                        message: 0,
-                    };
-                    sort_steps.push(step);
-
                     step = {
                         highlights:
-                            [{
-                                color: HIGHLIGHT_TYPE.DISCREPANCY,
-                                indices: [i, j]
-                            }],
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                }, {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [i]
+                                }, {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                            ],
                         message: 0,
                         changes: [replace_j_with_lower, restore_j_from_temp],
                     };
@@ -328,6 +359,14 @@ export class SortingOperationFactory {
             let step: SortStep = {
                 highlights:
                     [{
+                        color: HIGHLIGHT_TYPE.BASE,
+                        indices: curr_part
+                    }, {
+                        color: HIGHLIGHT_TYPE.DIM_BASE,
+                        indices: [],
+                        excl_indices: curr_part
+                    },
+                    {
                         color: HIGHLIGHT_TYPE.DISCREPANCY,
                         indices: [i + 1, end]
                     }],
@@ -345,6 +384,13 @@ export class SortingOperationFactory {
             step = {
                 highlights:
                     [{
+                        color: HIGHLIGHT_TYPE.BASE,
+                        indices: curr_part
+                    }, {
+                        color: HIGHLIGHT_TYPE.DIM_BASE,
+                        indices: [],
+                        excl_indices: curr_part
+                    }, {
                         color: HIGHLIGHT_TYPE.DISCREPANCY,
                         indices: [i + 1, end]
                     }],
