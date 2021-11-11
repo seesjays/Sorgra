@@ -23,11 +23,13 @@ type HighlightedIndex = {
     excl_indices?: number[];
 }
 
+type StepChange = [number, number];
+
 type SortStep = {
     highlights: HighlightedIndex[];
     keep_prev_highlight?: boolean;
     message: number;
-    changes?: [number, number][];
+    changes?: StepChange[];
 }
 
 interface SortingOperation {
@@ -201,8 +203,8 @@ export class SortingOperationFactory {
         let sort_steps: SortStep[] = [];
         const messages = ["Insertion Sort",
             "Incremented selection.",
-            "Searching for a pair where selection < left.",
-            "Selection < left, swapping until selection > left.",
+            "Searching for a pair where the selection is lower than what's before it.",
+            "Selection < left, swapping until selection >= left.",
             "Swap complete.",
             "Done moving selection.",
             "Insertion Sort: Complete"];
@@ -279,9 +281,33 @@ export class SortingOperationFactory {
         return { name: "Insertion Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
+    private swap(x: number, y: number): [StepChange, StepChange] {
+        let temp = this.data_y[x];
+
+        this.data_y[x] = this.data_y[y];
+        const replace_x_with_y: StepChange = [x, this.data_y[x]];
+
+        this.data_y[y] = temp;
+        const replace_y_with_x_from_temp: StepChange = [y, temp];
+
+        return [replace_x_with_y, replace_y_with_x_from_temp];
+    }
+
+    private create_range(low: number, high: number): number[] {
+        let inds: number[] = [];
+
+        for (let ind = low; ind < high; ind++) {
+            inds.push(ind)
+        }
+
+        return inds;
+    }
+
     private generate_quicksort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
+        let step: SortStep;
         const messages = ["Quick Sort",
+
             "Selected new pivot index.",
             "Swapped the misordered values.",
             "Quick Sort: Complete"];
@@ -289,131 +315,392 @@ export class SortingOperationFactory {
         sort_steps.push({ highlights: [], message: 0 });
 
         const partition = (start: number, end: number): number => {
-            let x = this.data_y[end];
-            let i = start - 1;
-
             // highlight
-            let curr_part = (() => {
-                let inds: number[] = [];
+            let curr_part = this.create_range(start, end);
 
-                for (let i = start; i < end; i++) {
-                    inds.push(i)
-                }
+            let pivot_value = this.data_y[end];
+            let partition_index = start;
 
-                return inds;
-            })();
-
-            for (let j = start; j < end; j++) {
-                if (this.data_y[j] <= x) {
-                    i += 1;
-
-                    let step: SortStep = {
-                        highlights:
-                            [{
-                                color: HIGHLIGHT_TYPE.BASE,
-                                indices: curr_part
-                            }, {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [i]
-                            }, {
+            for (let i = start; i < end; i++) {
+                step = {
+                    highlights:
+                        [
+                            {
                                 color: HIGHLIGHT_TYPE.DIM_BASE,
                                 indices: [],
                                 excl_indices: curr_part
                             },
-                            ],
-                        message: 0,
-                    };
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: [i]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                indices: [partition_index]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [end]
+                            },
+                        ],
+                    message: 0,
+                };
+                sort_steps.push(step);
 
-                    sort_steps.push(step);
-
-                    let temp = this.data_y[i];
-
-                    this.data_y[i] = this.data_y[j];
-                    let replace_j_with_lower: [number, number] = [i, this.data_y[i]];
-
-                    this.data_y[j] = temp;
-                    let restore_j_from_temp: [number, number] = [j, temp];
+                if (this.data_y[i] <= pivot_value) {
+                    // swap because element < pivot
+                    let step_changes = this.swap(i, partition_index);
 
                     step = {
                         highlights:
                             [
                                 {
-                                    color: HIGHLIGHT_TYPE.BASE,
-                                    indices: curr_part
-                                }, {
-                                    color: HIGHLIGHT_TYPE.SELECTED,
-                                    indices: [i]
-                                }, {
                                     color: HIGHLIGHT_TYPE.DIM_BASE,
                                     indices: [],
                                     excl_indices: curr_part
                                 },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.CORRECTED,
+                                    indices: [i, partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [end]
+                                },
                             ],
+                        changes: step_changes,
                         message: 0,
-                        changes: [replace_j_with_lower, restore_j_from_temp],
                     };
                     sort_steps.push(step);
+
+                    partition_index++;
                 }
             }
 
-            let step: SortStep = {
+            step = {
                 highlights:
-                    [{
-                        color: HIGHLIGHT_TYPE.BASE,
-                        indices: curr_part
-                    }, {
-                        color: HIGHLIGHT_TYPE.DIM_BASE,
-                        indices: [],
-                        excl_indices: curr_part
-                    },
-                    {
-                        color: HIGHLIGHT_TYPE.DISCREPANCY,
-                        indices: [i + 1, end]
-                    }],
+                    [
+                        {
+                            color: HIGHLIGHT_TYPE.DIM_BASE,
+                            indices: [],
+                            excl_indices: curr_part
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.BASE,
+                            indices: curr_part
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [partition_index]
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.DISCREPANCY,
+                            indices: [partition_index, end]
+                        },
+                    ],
                 message: 0,
             };
             sort_steps.push(step);
 
-            let temp = this.data_y[i + 1];
-            this.data_y[i + 1] = this.data_y[end];
-            let replace_j_with_lower: [number, number] = [i + 1, this.data_y[i + 1]];
-
-            this.data_y[end] = temp;
-            let restore_end_from_temp: [number, number] = [end, temp];
+            // swap end with element at partition index
+            let step_changes = this.swap(partition_index, end);
 
             step = {
                 highlights:
-                    [{
-                        color: HIGHLIGHT_TYPE.BASE,
-                        indices: curr_part
-                    }, {
-                        color: HIGHLIGHT_TYPE.DIM_BASE,
-                        indices: [],
-                        excl_indices: curr_part
-                    }, {
-                        color: HIGHLIGHT_TYPE.DISCREPANCY,
-                        indices: [i + 1, end]
-                    }],
+                    [
+                        {
+                            color: HIGHLIGHT_TYPE.DIM_BASE,
+                            indices: [],
+                            excl_indices: curr_part
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.BASE,
+                            indices: curr_part
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [partition_index]
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.CORRECTED,
+                            indices: [partition_index, end]
+                        },
+                    ],
+                changes: step_changes,
                 message: 0,
-                changes: [replace_j_with_lower, restore_end_from_temp],
             };
             sort_steps.push(step);
 
-            return i + 1;
+            return partition_index;
+        }
+
+        const quicksort = (start: number, end: number): void => {
+            if (start < end) {
+                const partition_index: number = partition(start, end);
+
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [partition_index]
+                            },
+                        ],
+                    message: 0,
+                };
+                sort_steps.push(step);
+
+                quicksort(start, partition_index - 1);
+                quicksort(partition_index + 1, end);
+            }
+        }
+
+        quicksort(0, this.data_y.length - 1);
+
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
+        sort_steps.push(step);
+        console.dir(this.data_y);
+        this.return_to_original();
+
+        return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
+    private _generate_quicksort_steps(): SortingOperation {
+        let sort_steps: SortStep[] = [];
+        let step: SortStep;
+        const messages = ["Quick Sort",
+
+            "Selected new pivot index.",
+            "Swapped the misordered values.",
+            "Quick Sort: Complete"];
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+        const partition = (start: number, end: number): number => {
+            // Find "middle" value
+            let pivot_index = Math.floor((start + end) / 2);
+
+            let pivot_value = this.data_y[pivot_index];
+
+            let left_ind = start - 1;
+            let right_ind = end + 1;
+
+            // highlight
+            let curr_part = (() => {
+                let inds: number[] = [];
+
+                for (let ind = left_ind; ind < right_ind; ind++) {
+                    inds.push(ind)
+                }
+
+                return inds;
+            })();
+
+            while (true) {
+                do {
+                    left_ind += 1;
+
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [pivot_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING,
+                                    indices: [left_ind]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                    indices: [right_ind]
+                                },
+                            ],
+                        message: 0,
+                    };
+                    sort_steps.push(step);
+                }
+                while (this.data_y[left_ind] < pivot_value);
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [pivot_index]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [left_ind]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                indices: [right_ind]
+                            },
+                        ],
+                    message: 0,
+                };
+                sort_steps.push(step);
+
+                do {
+                    right_ind -= 1;
+
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [pivot_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                    indices: [left_ind]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                    indices: [right_ind]
+                                },
+                            ],
+                        message: 0,
+                    };
+                    sort_steps.push(step);
+                }
+                while (this.data_y[right_ind] > pivot_value);
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [pivot_index]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [left_ind]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [right_ind]
+                            },
+                        ],
+                    message: 0,
+                };
+                sort_steps.push(step);
+
+                if (left_ind >= right_ind) {
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [right_ind]
+                                },
+                            ],
+                        message: 0,
+                    };
+                    sort_steps.push(step);
+
+                    return right_ind;
+                }
+
+
+                let step_changes = this.swap(left_ind, right_ind);
+
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: curr_part
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [pivot_index]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [left_ind, right_ind]
+                            },
+                        ],
+                    changes: step_changes,
+                    message: 0,
+                };
+                sort_steps.push(step);
+            }
         }
 
         const quicksort = (start: number, end: number): void => {
             if (start < end) {
                 const pivot_index: number = partition(start, end);
-
-                quicksort(start, pivot_index - 1);
+                quicksort(start, pivot_index);
+                sort_steps.push(step);
                 quicksort(pivot_index + 1, end);
             }
         }
 
         quicksort(0, this.data_y.length - 1);
 
-        let step: SortStep = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
         sort_steps.push(step);
         console.dir(this.data_y);
         this.return_to_original();
