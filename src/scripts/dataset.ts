@@ -307,9 +307,15 @@ export class SortingOperationFactory {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
         const messages = ["Quick Sort",
-
-            "Selected new pivot index.",
+            "Partitioning subarray to the left of the pivot(yellow)",
+            "Partitioning subarray to the right of the pivot(yellow)",
+            "Subarray too small for partitioning (<=1), moving to the (hopefully unsorted) adjacent subarray.",
+            "Pivot now has lower values to the left and higher values to the right. Moving on to the next subarray.",
+            "Left subarray",
+            "Right subarray",
+            
             "Swapped the misordered values.",
+            "Swapping value at partition index with value at end.",
             "Quick Sort: Complete"];
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -409,6 +415,10 @@ export class SortingOperationFactory {
                             color: HIGHLIGHT_TYPE.DISCREPANCY,
                             indices: [partition_index, end]
                         },
+                        {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [end]
+                        },
                     ],
                 message: 0,
             };
@@ -437,9 +447,13 @@ export class SortingOperationFactory {
                             color: HIGHLIGHT_TYPE.CORRECTED,
                             indices: [partition_index, end]
                         },
+                        {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [partition_index]
+                        },
                     ],
                 changes: step_changes,
-                message: 0,
+                message: 4,
             };
             sort_steps.push(step);
 
@@ -450,20 +464,87 @@ export class SortingOperationFactory {
             if (start < end) {
                 const partition_index: number = partition(start, end);
 
+                let newrangea = this.create_range(start, partition_index);
+                let newrangeb = this.create_range(partition_index + 1, end);
+
                 step = {
                     highlights:
                         [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_DISCREPANCY,
+                                indices: newrangea
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_CORRECTED,
+                                indices: newrangeb,
+                            },
                             {
                                 color: HIGHLIGHT_TYPE.SELECTED,
                                 indices: [partition_index]
                             },
                         ],
-                    message: 0,
+                    message: 1,
+                };
+                sort_steps.push(step);
+
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: newrangea
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [partition_index]
+                            },
+                        ],
+                    message: 5,
                 };
                 sort_steps.push(step);
 
                 quicksort(start, partition_index - 1);
+
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: newrangeb
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [partition_index]
+                            },
+                        ],
+                    message: 6,
+                };
+                sort_steps.push(step);
                 quicksort(partition_index + 1, end);
+            }
+            else {
+                step = {
+                    highlights:
+                        [{ color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: [Math.max(start, end)] }
+                        ],
+                    message: 3,
+                };
+                sort_steps.push(step);
             }
         }
 
@@ -471,7 +552,6 @@ export class SortingOperationFactory {
 
         step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
         sort_steps.push(step);
-        console.dir(this.data_y);
         this.return_to_original();
 
         return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
