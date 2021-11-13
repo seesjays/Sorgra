@@ -313,10 +313,16 @@ export class SortingOperationFactory {
             "Pivot now has lower values to the left and higher values to the right. Moving on to the next subarray.",
             "Left subarray",
             "Right subarray",
-            
+
             "Swapped the misordered values.",
             "Swapping value at partition index with value at end.",
             "Quick Sort: Complete"];
+
+        const messsages2 = ["Quick Sort",
+        "Partitioning subarray.",
+        "Calling quicksort on subarray left of the partition index.",
+        "",
+        ]
 
         sort_steps.push({ highlights: [], message: 0 });
 
@@ -462,10 +468,36 @@ export class SortingOperationFactory {
 
         const quicksort = (start: number, end: number): void => {
             if (start < end) {
+                let partarray = this.create_range(start, end);
+                step = {
+                    highlights:
+                        [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: partarray
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [end]
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [end]
+                            },
+                        ],
+                    message: 1,
+                };
+                sort_steps.push(step);
+
                 const partition_index: number = partition(start, end);
 
-                let newrangea = this.create_range(start, partition_index);
-                let newrangeb = this.create_range(partition_index + 1, end);
+                let left = this.create_range(start, partition_index);
+                let right = this.create_range(partition_index, end);
 
                 step = {
                     highlights:
@@ -477,64 +509,19 @@ export class SortingOperationFactory {
                             },
                             {
                                 color: HIGHLIGHT_TYPE.DIM_DISCREPANCY,
-                                indices: newrangea
+                                indices: left
                             },
                             {
                                 color: HIGHLIGHT_TYPE.DIM_CORRECTED,
-                                indices: newrangeb,
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [partition_index]
-                            },
+                                indices: right
+                            }
                         ],
                     message: 1,
                 };
                 sort_steps.push(step);
 
-                step = {
-                    highlights:
-                        [
-                            {
-                                color: HIGHLIGHT_TYPE.DIM_BASE,
-                                indices: [],
-                                excl_indices: []
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SEEKING,
-                                indices: newrangea
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [partition_index]
-                            },
-                        ],
-                    message: 5,
-                };
-                sort_steps.push(step);
-
                 quicksort(start, partition_index - 1);
 
-                step = {
-                    highlights:
-                        [
-                            {
-                                color: HIGHLIGHT_TYPE.DIM_BASE,
-                                indices: [],
-                                excl_indices: []
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SEEKING,
-                                indices: newrangeb
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [partition_index]
-                            },
-                        ],
-                    message: 6,
-                };
-                sort_steps.push(step);
                 quicksort(partition_index + 1, end);
             }
             else {
