@@ -206,7 +206,7 @@ export class SortingOperationFactory {
             "Searching for a pair where the selection is lower than what's before it.",
             "Selection < left, swapping until selection >= left.",
             "Swap complete.",
-            "Done moving selection.",
+            "Done moving selection, jumping to selection index pre-swapping(purple).",
             "Insertion Sort: Complete"];
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -241,6 +241,10 @@ export class SortingOperationFactory {
                         }, {
                             color: HIGHLIGHT_TYPE.SELECTED,
                             indices: [j]
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                            indices: [i + 1]
                         }],
                     message: 3
                 };
@@ -261,6 +265,10 @@ export class SortingOperationFactory {
                         }, {
                             color: HIGHLIGHT_TYPE.SELECTED,
                             indices: [j - 1]
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                            indices: [i + 1]
                         }],
                     message: 4,
                     changes: [replace_j_with_lower, restore_lower_from_temp],
@@ -270,7 +278,12 @@ export class SortingOperationFactory {
                 j -= 1;
             }
 
-            step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [j] }], message: 5 }
+            step = {
+                highlights: [
+                    { color: HIGHLIGHT_TYPE.CORRECTED, indices: [j] },
+                    { color: HIGHLIGHT_TYPE.SEEKING_ALT, indices: [i + 1] }
+                ], message: 5
+            }
             sort_steps.push(step);
         }
 
@@ -294,6 +307,8 @@ export class SortingOperationFactory {
     }
 
     private create_range(low: number, high: number): number[] {
+        if (low === high) return [low];
+
         let inds: number[] = [];
 
         for (let ind = low; ind < high; ind++) {
@@ -319,10 +334,15 @@ export class SortingOperationFactory {
             "Quick Sort: Complete"];
 
         const messsages2 = ["Quick Sort",
-        "Partitioning subarray.",
-        "Calling quicksort on subarray left of the partition index.",
-        "",
-        ]
+            "Partitioning subarray.",
+            "Attempting quicksort on subarray left of the partition index.",
+            "Did not quicksort subarray, it's either already sorted or too small.",
+            "Partitioning: (magenta) Searching for value larger than the selected pivot (yellow).",
+            "Partitioning: (teal) Searching for value smaller than the selected pivot (yellow).",
+            "Partitioning complete, will use new partition index to create next subarrays.",
+            "Created new subarrays.",
+            "Quick Sort: Complete.",
+        ];
 
         sort_steps.push({ highlights: [], message: 0 });
 
@@ -359,45 +379,83 @@ export class SortingOperationFactory {
                                 indices: [end]
                             },
                         ],
-                    message: 0,
+                    message: 9,
                 };
                 sort_steps.push(step);
 
                 if (this.data_y[i] <= pivot_value) {
-                    // swap because element < pivot
-                    let step_changes = this.swap(i, partition_index);
+                    if (this.data_y[i] === this.data_y[partition_index]) {
+                        // don't highlight here, that'd be confusing since nothing is swapped.
 
-                    step = {
-                        highlights:
-                            [
-                                {
-                                    color: HIGHLIGHT_TYPE.DIM_BASE,
-                                    indices: [],
-                                    excl_indices: curr_part
-                                },
-                                {
-                                    color: HIGHLIGHT_TYPE.BASE,
-                                    indices: curr_part
-                                },
-                                {
-                                    color: HIGHLIGHT_TYPE.SELECTED,
-                                    indices: [partition_index]
-                                },
-                                {
-                                    color: HIGHLIGHT_TYPE.CORRECTED,
-                                    indices: [i, partition_index]
-                                },
-                                {
-                                    color: HIGHLIGHT_TYPE.SELECTED,
-                                    indices: [end]
-                                },
-                            ],
-                        changes: step_changes,
-                        message: 0,
-                    };
-                    sort_steps.push(step);
+                        step = {
+                            highlights:
+                                [
+                                    {
+                                        color: HIGHLIGHT_TYPE.DIM_BASE,
+                                        indices: [],
+                                        excl_indices: curr_part
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.BASE,
+                                        indices: curr_part
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SEEKING,
+                                        indices: [i]
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                        indices: [partition_index]
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SELECTED,
+                                        indices: [end]
+                                    },
+                                ],
+                            message: 9,
+                        };
+                        sort_steps.push(step);
 
-                    partition_index++;
+                        partition_index++;
+                    }
+                    else {
+
+
+
+                        let step_changes = this.swap(i, partition_index);
+
+                        step = {
+                            highlights:
+                                [
+                                    {
+                                        color: HIGHLIGHT_TYPE.DIM_BASE,
+                                        indices: [],
+                                        excl_indices: curr_part
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.BASE,
+                                        indices: curr_part
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SELECTED,
+                                        indices: [partition_index]
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.CORRECTED,
+                                        indices: [i, partition_index]
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SELECTED,
+                                        indices: [end]
+                                    },
+                                ],
+                            changes: step_changes,
+                            message: 9,
+                        };
+                        sort_steps.push(step);
+
+                        partition_index++;
+                    }
                 }
             }
 
@@ -468,36 +526,10 @@ export class SortingOperationFactory {
 
         const quicksort = (start: number, end: number): void => {
             if (start < end) {
-                let partarray = this.create_range(start, end);
-                step = {
-                    highlights:
-                        [
-                            {
-                                color: HIGHLIGHT_TYPE.DIM_BASE,
-                                indices: [],
-                                excl_indices: []
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SEEKING,
-                                indices: partarray
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [end]
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [end]
-                            },
-                        ],
-                    message: 1,
-                };
-                sort_steps.push(step);
-
                 const partition_index: number = partition(start, end);
 
-                let left = this.create_range(start, partition_index);
-                let right = this.create_range(partition_index, end);
+                let left = this.create_range(start - 1, partition_index);
+                let right = this.create_range(partition_index, end + 1);
 
                 step = {
                     highlights:
@@ -514,7 +546,11 @@ export class SortingOperationFactory {
                             {
                                 color: HIGHLIGHT_TYPE.DIM_CORRECTED,
                                 indices: right
-                            }
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: [partition_index]
+                            },
                         ],
                     message: 1,
                 };
@@ -525,9 +561,10 @@ export class SortingOperationFactory {
                 quicksort(partition_index + 1, end);
             }
             else {
+                console.log([Math.min(start, end), Math.max(start, end)])
                 step = {
                     highlights:
-                        [{ color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: [Math.max(start, end)] }
+                        [{ color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: this.create_range(Math.min(start, end), Math.max(start, end)) }
                         ],
                     message: 3,
                 };
@@ -548,10 +585,12 @@ export class SortingOperationFactory {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
         const messages = ["Quick Sort",
+            "Partitioning subarray.",
+            "Calling quicksort on subarray left of the partition index.",
+            "Partitioning: Searching for value smaller than the pivot(yellow).",
+            "Partitioning: Searching for value larger than the pivot(yellow)"
 
-            "Selected new pivot index.",
-            "Swapped the misordered values.",
-            "Quick Sort: Complete"];
+        ];
 
         sort_steps.push({ highlights: [], message: 0 });
 
