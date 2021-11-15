@@ -334,12 +334,15 @@ export class SortingOperationFactory {
             "Quick Sort: Complete"];
 
         const messsages2 = ["Quick Sort",
-            "Partitioning subarray.",
-            "Attempting quicksort on subarray left of the partition index.",
+            "Attempting quicksort on subarray left of the pivot index.",
             "Did not quicksort subarray, it's either already sorted or too small.",
-            "Partitioning: (magenta) Searching for value larger than the selected pivot (yellow).",
-            "Partitioning: (teal) Searching for value smaller than the selected pivot (yellow).",
-            "Partitioning complete, will use new partition index to create next subarrays.",
+            "Partitioning: Searching for a value > or <= pivot.",
+            "Partitioning: Searching for a value <= pivot.",
+            "Partitioning: Found value > pivot, marking index for a swap later.",
+            "Partitioning: Found value <= pivot, swapping then incrementing left and right indices.",
+            "Partitioning: Pivot swapped, it's in between lower and higher values now.",
+            "Partitioning: Values are identical, won't be swapped.",
+            "Partitioning complete, will use new pivot index to create next subarrays.",
             "Created new subarrays.",
             "Quick Sort: Complete.",
         ];
@@ -353,112 +356,136 @@ export class SortingOperationFactory {
             let pivot_value = this.data_y[end];
             let partition_index = start;
 
-            for (let i = start; i < end; i++) {
-                step = {
-                    highlights:
-                        [
-                            {
-                                color: HIGHLIGHT_TYPE.DIM_BASE,
-                                indices: [],
-                                excl_indices: curr_part
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.BASE,
-                                indices: curr_part
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SEEKING,
-                                indices: [i]
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
-                                indices: [partition_index]
-                            },
-                            {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: [end]
-                            },
-                        ],
-                    message: 9,
-                };
-                sort_steps.push(step);
+            for (let right_ind = start; right_ind < end; right_ind++) {
+                if (this.data_y[right_ind] <= pivot_value) {
+                    // found value < pivot, increment both left and right ind
 
-                if (this.data_y[i] <= pivot_value) {
-                    if (this.data_y[i] === this.data_y[partition_index]) {
-                        // don't highlight here, that'd be confusing since nothing is swapped.
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING,
+                                    indices: [right_ind]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                    indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [end]
+                                },
+                            ],
+                        message: 9,
+                    };
+                    sort_steps.push(step);
 
-                        step = {
-                            highlights:
-                                [
-                                    {
-                                        color: HIGHLIGHT_TYPE.DIM_BASE,
-                                        indices: [],
-                                        excl_indices: curr_part
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.BASE,
-                                        indices: curr_part
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.SEEKING,
-                                        indices: [i]
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.SEEKING_ALT,
-                                        indices: [partition_index]
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.SELECTED,
-                                        indices: [end]
-                                    },
-                                ],
-                            message: 9,
-                        };
-                        sort_steps.push(step);
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                    indices: [right_ind, partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [end]
+                                },
+                            ],
+                        message: 9,
+                    };
+                    sort_steps.push(step);
 
-                        partition_index++;
-                    }
-                    else {
+                    let step_changes = this.swap(right_ind, partition_index);
 
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.CORRECTED,
+                                    indices: [right_ind, partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [end]
+                                },
+                            ],
+                        changes: step_changes,
+                        message: 9,
+                    };
+                    sort_steps.push(step);
 
-
-                        let step_changes = this.swap(i, partition_index);
-
-                        step = {
-                            highlights:
-                                [
-                                    {
-                                        color: HIGHLIGHT_TYPE.DIM_BASE,
-                                        indices: [],
-                                        excl_indices: curr_part
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.BASE,
-                                        indices: curr_part
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.SELECTED,
-                                        indices: [partition_index]
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.CORRECTED,
-                                        indices: [i, partition_index]
-                                    },
-                                    {
-                                        color: HIGHLIGHT_TYPE.SELECTED,
-                                        indices: [end]
-                                    },
-                                ],
-                            changes: step_changes,
-                            message: 9,
-                        };
-                        sort_steps.push(step);
-
-                        partition_index++;
-                    }
+                    partition_index++;
+                }
+                else {
+                    // found value > pivot, leave left ind(partition ind)
+                    step = {
+                        highlights:
+                            [
+                                {
+                                    color: HIGHLIGHT_TYPE.DIM_BASE,
+                                    indices: [],
+                                    excl_indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.BASE,
+                                    indices: curr_part
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING,
+                                    indices: [right_ind]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                    indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SELECTED,
+                                    indices: [end]
+                                },
+                            ],
+                        message: 9,
+                    };
+                    sort_steps.push(step);
                 }
             }
 
+            // swap end with element at partition index
             step = {
                 highlights:
                     [
@@ -488,7 +515,6 @@ export class SortingOperationFactory {
             };
             sort_steps.push(step);
 
-            // swap end with element at partition index
             let step_changes = this.swap(partition_index, end);
 
             step = {
@@ -561,7 +587,6 @@ export class SortingOperationFactory {
                 quicksort(partition_index + 1, end);
             }
             else {
-                console.log([Math.min(start, end), Math.max(start, end)])
                 step = {
                     highlights:
                         [{ color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: this.create_range(Math.min(start, end), Math.max(start, end)) }
