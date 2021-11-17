@@ -29,6 +29,7 @@ type SortStep = {
     highlights: HighlightedIndex[];
     keep_prev_highlight?: boolean;
     message: number;
+    step_message_color?: HIGHLIGHT_TYPE;
     changes?: StepChange[];
 }
 
@@ -1000,7 +1001,7 @@ export class SortingOperationController {
         else {
             this.messages = ["Undocumented Step"];
         }
-        this.message_history_len = 5;
+        this.message_history_len = 4;
         this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
         this.highlight_cols = ColorMap;
 
@@ -1071,8 +1072,16 @@ export class SortingOperationController {
             this.highlight_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
             this.message_history[0].unshift(this.operation.steps[this.step_counter].message);
-            this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);
 
+            let color = this.operation.steps[this.step_counter].step_message_color;
+            
+            if (color !== undefined) {
+                this.message_history[1].unshift(color);   
+            }
+            else
+            {
+                this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);   
+            }
 
             if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
                 this.message_history[0].pop();
