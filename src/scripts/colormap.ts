@@ -1,4 +1,17 @@
-import { HIGHLIGHT_TYPE } from "./dataset";
+export enum HIGHLIGHT_TYPE {
+    BASE,
+    DISCREPANCY,
+    CORRECTED,
+    SEEKING,
+    SEEKING_ALT,
+    SELECTED,
+    DIM_BASE,
+    DIM_DISCREPANCY,
+    DIM_CORRECTED,
+    DIM_SEEKING,
+    DIM_SEEKING_ALT,
+    DIM_SELECTED,
+}
 
 export type ColorMapping = {
     [s in HIGHLIGHT_TYPE]: string;

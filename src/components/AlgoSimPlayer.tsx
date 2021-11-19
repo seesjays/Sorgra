@@ -6,7 +6,6 @@ import {
 	SortingOperationFactory,
 	SortingOperationController,
 	Algorithms,
-	HIGHLIGHT_TYPE,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
 import { SelectChangeEvent, Stack } from "@mui/material";
@@ -16,6 +15,7 @@ import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
 import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
 import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
+import { HIGHLIGHT_TYPE } from "../scripts/colormap";
 
 export enum Speed {
 	SLOW = 2,

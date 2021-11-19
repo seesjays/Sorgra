@@ -1,21 +1,5 @@
 import { ChartData } from "chart.js";
-import { ColorMapping, ColorMap } from "./colormap";
-
-
-export enum HIGHLIGHT_TYPE {
-    BASE,
-    DISCREPANCY,
-    CORRECTED,
-    SEEKING,
-    SEEKING_ALT,
-    SELECTED,
-    DIM_BASE,
-    DIM_DISCREPANCY,
-    DIM_CORRECTED,
-    DIM_SEEKING,
-    DIM_SEEKING_ALT,
-    DIM_SELECTED,
-}
+import { ColorMapping, ColorMap, HIGHLIGHT_TYPE } from "./colormap";
 
 type HighlightedIndex = {
     color: HIGHLIGHT_TYPE;

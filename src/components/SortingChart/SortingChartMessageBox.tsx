@@ -8,7 +8,7 @@ import { styled, useTheme } from "@mui/material/styles";
 import Stack from "@mui/material/Stack";
 import { Paper, Typography } from "@mui/material";
 import { width } from "@mui/system";
-import { HIGHLIGHT_TYPE } from "../../scripts/dataset";
+import { HIGHLIGHT_TYPE } from "../../scripts/colormap";
 import { ColorMap } from "../../scripts/colormap";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
