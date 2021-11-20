@@ -9,9 +9,8 @@ type HighlightedIndex = {
 
 type StepChange = [number, number];
 
-export type MessageSet = [
-    [string, HIGHLIGHT_TYPE]
-] | string[];
+type ColoredMessage = [string, HIGHLIGHT_TYPE];
+export type MessageSet = ColoredMessage[] | string[];
 
 type SortStep = {
     highlights: HighlightedIndex[];
@@ -25,7 +24,7 @@ interface SortingOperation {
     name: string;
     steps: SortStep[];
     data_y: number[];
-    messages?: string[];
+    messages?: string[] | ColoredMessage[];
 }
 
 interface algorithm {
@@ -311,19 +310,20 @@ export class SortingOperationFactory {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
 
-        const messages = ["Quick Sort",
-            "Attempting quicksort on subarray left of the pivot index at this level of recursion.",
-            "Attempting quicksort on subarray right of the pivot index at this level of recursion.",
-            "Didn't quicksort subarray; it's either too small or doesn't exist. Moving to the previous recursion level.",
-            "Partitioning: Searching for values > or <= pivot. (depending on what hasn't been found).",
-            "Partitioning: Found value > pivot, marking index for a swap later.",
-            "Partitioning: Found value <= pivot, swapping marked values (itself, if a > value hasn't been found first).",
-            "Partitioning: Swapped values (could've swapped with itself), now incrementing both indices.",
-            "Partitioning: Small index reached pivot index, swapping with large index (large ind might == small ind).",
-            "Partitioning: Pivot swapped, it's in between lower and higher values now.",
-            "Partitioning complete, will use new pivot index to create next subarrays.",
-            "Created new subarrays.",
-            "Quick Sort: Complete.",
+        const messages: MessageSet = [
+            ["Quick Sort", HIGHLIGHT_TYPE.BASE],
+            ["Attempting quicksort on subarray left of the pivot index at this level of recursion.", HIGHLIGHT_TYPE.DISCREPANCY],
+            ["Attempting quicksort on subarray right of the pivot index at this level of recursion.", HIGHLIGHT_TYPE.DISCREPANCY],
+            ["Didn't quicksort subarray; it's either too small or doesn't exist. Moving to the previous recursion level.", HIGHLIGHT_TYPE.DIM_BASE],
+            ["Partitioning: Searching for values > or <= pivot. (depending on what hasn't been found).", HIGHLIGHT_TYPE.SEEKING],
+            ["Partitioning: Found value > pivot, marking index for a swap later.", HIGHLIGHT_TYPE.SEEKING_ALT],
+            ["Partitioning: Found value <= pivot, swapping marked values (itself, if a > value hasn't been found first).", HIGHLIGHT_TYPE.DISCREPANCY],
+            ["Partitioning: Swapped values (could've swapped with itself), now incrementing both indices.", HIGHLIGHT_TYPE.CORRECTED],
+            ["Partitioning: Small index reached pivot index, swapping with large index (large ind might == small ind).", HIGHLIGHT_TYPE.DISCREPANCY],
+            ["Partitioning: Pivot swapped, it's in between lower and higher values now.", HIGHLIGHT_TYPE.CORRECTED],
+            ["Partitioning complete, will use new pivot index to create next subarrays.", HIGHLIGHT_TYPE.SELECTED],
+            ["Created new subarrays.", HIGHLIGHT_TYPE.DIM_DISCREPANCY],
+            ["Quick Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
         ];
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -354,12 +354,12 @@ export class SortingOperationFactory {
                                     indices: curr_part
                                 },
                                 {
-                                    color: HIGHLIGHT_TYPE.SEEKING,
-                                    indices: [right_ind]
-                                },
-                                {
                                     color: HIGHLIGHT_TYPE.SEEKING_ALT,
                                     indices: [partition_index]
+                                },
+                                {
+                                    color: HIGHLIGHT_TYPE.SEEKING,
+                                    indices: [right_ind]
                                 },
                                 {
                                     color: HIGHLIGHT_TYPE.SELECTED,
@@ -450,12 +450,12 @@ export class SortingOperationFactory {
                                             indices: curr_part
                                         },
                                         {
-                                            color: HIGHLIGHT_TYPE.SEEKING,
-                                            indices: [right_ind]
-                                        },
-                                        {
                                             color: HIGHLIGHT_TYPE.SEEKING_ALT,
                                             indices: [partition_index]
+                                        },
+                                        {
+                                            color: HIGHLIGHT_TYPE.SEEKING,
+                                            indices: [right_ind]
                                         },
                                         {
                                             color: HIGHLIGHT_TYPE.SELECTED,
@@ -483,12 +483,12 @@ export class SortingOperationFactory {
                                         indices: curr_part
                                     },
                                     {
-                                        color: HIGHLIGHT_TYPE.SEEKING,
-                                        indices: [right_ind]
-                                    },
-                                    {
                                         color: HIGHLIGHT_TYPE.SEEKING_ALT,
                                         indices: [partition_index]
+                                    },
+                                    {
+                                        color: HIGHLIGHT_TYPE.SEEKING,
+                                        indices: [right_ind]
                                     },
                                     {
                                         color: HIGHLIGHT_TYPE.SELECTED,
@@ -680,7 +680,7 @@ export class SortingOperationFactory {
                 step = {
                     highlights:
                         [
-                            { color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, 
+                            { color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] },
                             { color: HIGHLIGHT_TYPE.SELECTED, indices: [prevpiv] }
                         ],
                     message: 3,
@@ -1050,6 +1050,45 @@ export class SortingOperationController {
         }
     }
 
+    private isColoredMessages(messages: MessageSet ): messages is ColoredMessage[] {
+        return Array.isArray(messages[0]);
+    }
+
+    private update_message_history(sortingstep: SortStep): void {
+        if (this.isColoredMessages(this.messages))
+        {
+            let color = this.messages[sortingstep.message][1];
+
+            this.message_history[0].unshift(sortingstep.message);
+            this.message_history[1].unshift(color);
+
+            if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
+                this.message_history[0].pop();
+                this.message_history[1].pop();
+            }
+
+            return;
+        }
+
+        // Step colors not predefined
+        
+        this.message_history[0].unshift(sortingstep.message);
+
+        let color = sortingstep.step_message_color;
+
+        if (color !== undefined) {
+            this.message_history[1].unshift(color);
+        }
+        else {
+            this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);
+        }
+
+        if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
+            this.message_history[0].pop();
+            this.message_history[1].pop();
+        }
+    }
+
     private reset_message_history(): void {
         this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
     }
@@ -1059,23 +1098,7 @@ export class SortingOperationController {
             this.step_counter += 1;
             this.highlight_step(this.operation.steps[this.step_counter]);
             this.enact_step_changes(this.operation.steps[this.step_counter]);
-            this.message_history[0].unshift(this.operation.steps[this.step_counter].message);
-
-            let color = this.operation.steps[this.step_counter].step_message_color;
-
-            if (color !== undefined) {
-                this.message_history[1].unshift(color);
-            }
-            else {
-                this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);
-            }
-
-            if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
-                this.message_history[0].pop();
-                this.message_history[1].pop();
-            }
-
-            // console.log(this.message_history[0])
+            this.update_message_history(this.operation.steps[this.step_counter]);
         }
 
         if (this.step_counter === this.operation.steps.length - 1) {

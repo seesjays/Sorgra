@@ -46,7 +46,7 @@ export default function SortingChartMessageBox(
 					borderLeft: `4px solid ${val[1]}`,
 				}}
 			>
-				<Typography fontSize={"1.25em"}>{val[0]}</Typography>
+				<Typography fontSize={"1.25em"}>{ (Array.isArray(val[0])) ? val[0][0] : val[0]}</Typography>
 			</ListItem>
 			<Divider
 				sx={{
