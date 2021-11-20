@@ -9,6 +9,10 @@ type HighlightedIndex = {
 
 type StepChange = [number, number];
 
+export type MessageSet = [
+    [string, HIGHLIGHT_TYPE]
+] | string[];
+
 type SortStep = {
     highlights: HighlightedIndex[];
     keep_prev_highlight?: boolean;
@@ -296,7 +300,7 @@ export class SortingOperationFactory {
 
         let inds: number[] = [];
 
-        for (let ind = low; ind < high; ind++) {
+        for (let ind = low; ind <= high; ind++) {
             inds.push(ind)
         }
 
@@ -308,14 +312,14 @@ export class SortingOperationFactory {
         let step: SortStep;
 
         const messages = ["Quick Sort",
-            "Attempting quicksort on subarray left of the latest pivot index.",
-            "Attempting quicksort on subarray right of the latest pivot index.",
-            "Did not quicksort subarray, it's either already sorted or too small.",
+            "Attempting quicksort on subarray left of the pivot index at this level of recursion.",
+            "Attempting quicksort on subarray right of the pivot index at this level of recursion.",
+            "Didn't quicksort subarray; it's either too small or doesn't exist. Moving to the previous recursion level.",
             "Partitioning: Searching for values > or <= pivot. (depending on what hasn't been found).",
             "Partitioning: Found value > pivot, marking index for a swap later.",
             "Partitioning: Found value <= pivot, swapping marked values (itself, if a > value hasn't been found first).",
             "Partitioning: Swapped values (could've swapped with itself), now incrementing both indices.",
-            "Partitioning: Swapping pviot index with last high value.",
+            "Partitioning: Small index reached pivot index, swapping with large index (large ind might == small ind).",
             "Partitioning: Pivot swapped, it's in between lower and higher values now.",
             "Partitioning complete, will use new pivot index to create next subarrays.",
             "Created new subarrays.",
@@ -431,10 +435,8 @@ export class SortingOperationFactory {
                 }
                 else {
                     // found value > pivot, leave left ind(partition ind)
-                    if (highfound)
-                    {
-                        if (partition_index !== right_ind)
-                        {
+                    if (highfound) {
+                        if (partition_index !== right_ind) {
                             step = {
                                 highlights:
                                     [
@@ -465,8 +467,7 @@ export class SortingOperationFactory {
                             sort_steps.push(step);
                         }
                     }
-                    else
-                    {
+                    else {
                         highfound = true;
 
                         step = {
@@ -523,11 +524,12 @@ export class SortingOperationFactory {
                             indices: [partition_index, end]
                         },
                         {
-                            color: HIGHLIGHT_TYPE.SELECTED,
+                            color: HIGHLIGHT_TYPE.SEEKING,
                             indices: [end]
                         },
                     ],
                 message: 8,
+                step_message_color: HIGHLIGHT_TYPE.DISCREPANCY
             };
             sort_steps.push(step);
 
@@ -588,12 +590,12 @@ export class SortingOperationFactory {
             return partition_index;
         }
 
-        const quicksort = (start: number, end: number): void => {
+        const quicksort = (start: number, end: number, prevpiv: number): void => {
             if (start < end) {
                 const partition_index: number = partition(start, end);
 
-                let left = this.create_range(start - 1, partition_index);
-                let right = this.create_range(partition_index, end + 1);
+                let left = this.create_range(start, partition_index - 1);
+                let right = this.create_range(partition_index + 1, end);
 
                 step = {
                     highlights:
@@ -645,7 +647,7 @@ export class SortingOperationFactory {
                 };
                 sort_steps.push(step);
 
-                quicksort(start, partition_index - 1);
+                quicksort(start, partition_index - 1, partition_index);
 
                 step = {
                     highlights:
@@ -672,12 +674,14 @@ export class SortingOperationFactory {
                 };
                 sort_steps.push(step);
 
-                quicksort(partition_index + 1, end);
+                quicksort(partition_index + 1, end, partition_index);
             }
             else {
                 step = {
                     highlights:
-                        [{ color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, { color: HIGHLIGHT_TYPE.CORRECTED, indices: this.create_range(Math.min(start, end), Math.max(start, end)) }
+                        [
+                            { color: HIGHLIGHT_TYPE.DIM_BASE, indices: [], excl_indices: [] }, 
+                            { color: HIGHLIGHT_TYPE.SELECTED, indices: [prevpiv] }
                         ],
                     message: 3,
                 };
@@ -685,7 +689,7 @@ export class SortingOperationFactory {
             }
         }
 
-        quicksort(0, this.data_y.length - 1);
+        quicksort(0, this.data_y.length - 1, this.data_y.length - 1);
 
         step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
         sort_steps.push(step);
@@ -966,7 +970,7 @@ export class SortingOperationController {
 
     public step_counter: number;
 
-    public messages: string[];
+    public messages: MessageSet;
     private message_history_len: number;
     public message_history: [number[], HIGHLIGHT_TYPE[]];
 
@@ -1058,13 +1062,12 @@ export class SortingOperationController {
             this.message_history[0].unshift(this.operation.steps[this.step_counter].message);
 
             let color = this.operation.steps[this.step_counter].step_message_color;
-            
+
             if (color !== undefined) {
-                this.message_history[1].unshift(color);   
+                this.message_history[1].unshift(color);
             }
-            else
-            {
-                this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);   
+            else {
+                this.message_history[1].unshift(this.operation.steps[this.step_counter].highlights[0].color);
             }
 
             if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {

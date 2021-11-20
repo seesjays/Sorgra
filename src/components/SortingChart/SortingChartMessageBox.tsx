@@ -10,6 +10,7 @@ import { Paper, Typography } from "@mui/material";
 import { width } from "@mui/system";
 import { HIGHLIGHT_TYPE } from "../../scripts/colormap";
 import { ColorMap } from "../../scripts/colormap";
+import { MessageSet } from "../../scripts/dataset";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
 	width: "90%",
@@ -24,7 +25,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 const highlight_colors = ColorMap;
 
 type SortingChartMessageBoxProps = {
-	messages: string[];
+	messages: MessageSet;
 	message_ind_history: [number[], HIGHLIGHT_TYPE[]];
 };
 export default function SortingChartMessageBox(
