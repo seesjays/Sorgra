@@ -86,6 +86,30 @@ export class SortingOperationFactory {
         this.data_y = [...this.data_original];
     }
 
+    private swap(x: number, y: number): [StepChange, StepChange] {
+        let temp = this.data_y[x];
+
+        this.data_y[x] = this.data_y[y];
+        const replace_x_with_y: StepChange = [x, this.data_y[x]];
+
+        this.data_y[y] = temp;
+        const replace_y_with_x_from_temp: StepChange = [y, temp];
+
+        return [replace_x_with_y, replace_y_with_x_from_temp];
+    }
+
+    private create_range(low: number, high: number): number[] {
+        if (low === high) return [low];
+
+        let inds: number[] = [];
+
+        for (let ind = low; ind <= high; ind++) {
+            inds.push(ind)
+        }
+
+        return inds;
+    }
+
     private generate_bubblesort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
         const messages = ["Bubble Sort", "Searching for a pair where left > right.", "Detected a pair of misordered values.", "Swapped the misordered values.", "Bubble Sort: Complete"];
@@ -282,30 +306,6 @@ export class SortingOperationFactory {
         return { name: "Insertion Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    private swap(x: number, y: number): [StepChange, StepChange] {
-        let temp = this.data_y[x];
-
-        this.data_y[x] = this.data_y[y];
-        const replace_x_with_y: StepChange = [x, this.data_y[x]];
-
-        this.data_y[y] = temp;
-        const replace_y_with_x_from_temp: StepChange = [y, temp];
-
-        return [replace_x_with_y, replace_y_with_x_from_temp];
-    }
-
-    private create_range(low: number, high: number): number[] {
-        if (low === high) return [low];
-
-        let inds: number[] = [];
-
-        for (let ind = low; ind <= high; ind++) {
-            inds.push(ind)
-        }
-
-        return inds;
-    }
-
     private generate_quicksort_steps(): SortingOperation {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
@@ -320,7 +320,7 @@ export class SortingOperationFactory {
             ["Partitioning: Found value <= pivot, swapping marked values (itself, if a > value hasn't been found first).", HIGHLIGHT_TYPE.DISCREPANCY],
             ["Partitioning: Swapped values (could've swapped with itself), now incrementing both indices.", HIGHLIGHT_TYPE.CORRECTED],
             ["Partitioning: Small index reached pivot index, swapping with large index (large ind might == small ind).", HIGHLIGHT_TYPE.DISCREPANCY],
-            ["Partitioning: Pivot swapped, it's in between lower and higher values now.", HIGHLIGHT_TYPE.CORRECTED],
+            ["Partitioning: Pivot swapped, it's between lower and higher values now.", HIGHLIGHT_TYPE.CORRECTED],
             ["Partitioning complete, will use new pivot index to create next subarrays.", HIGHLIGHT_TYPE.SELECTED],
             ["Created new subarrays.", HIGHLIGHT_TYPE.DIM_DISCREPANCY],
             ["Quick Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
@@ -691,7 +691,7 @@ export class SortingOperationFactory {
 
         quicksort(0, this.data_y.length - 1, this.data_y.length - 1);
 
-        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 0 }
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: 12 }
         sort_steps.push(step);
         this.return_to_original();
 
@@ -931,6 +931,30 @@ export class SortingOperationFactory {
         return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
+    private generate_mergesort_steps(): SortingOperation {
+        // A clear benefit over ELPath, I've learned from the quicksort implementation,
+        // is that recursivity is much easier to use (still hard to explain, without a second chart...)
+        // What a convenience from not using generators! I can make things truly "recursive" because
+        // the steps are already done, there's no "stopping point" as there is in a generator.
+        // Hopefully with this newfound knowledge of the potential for recursion, I can implement this alg quicker.
+
+        let sort_steps: SortStep[] = [];
+        const messages: MessageSet = 
+        [
+            ["Merge Sort", HIGHLIGHT_TYPE.BASE],
+            ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
+        ];
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length-1, });
+
+        this.return_to_original();
+
+        return { name: "Merge Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
     private randomize_y(): void {
         this.data_y = this.generate_yvals();
         this.data_original = [...this.data_y];
@@ -1050,13 +1074,12 @@ export class SortingOperationController {
         }
     }
 
-    private isColoredMessages(messages: MessageSet ): messages is ColoredMessage[] {
+    private isColoredMessages(messages: MessageSet): messages is ColoredMessage[] {
         return Array.isArray(messages[0]);
     }
 
     private update_message_history(sortingstep: SortStep): void {
-        if (this.isColoredMessages(this.messages))
-        {
+        if (this.isColoredMessages(this.messages)) {
             let color = this.messages[sortingstep.message][1];
 
             this.message_history[0].unshift(sortingstep.message);
@@ -1071,7 +1094,7 @@ export class SortingOperationController {
         }
 
         // Step colors not predefined
-        
+
         this.message_history[0].unshift(sortingstep.message);
 
         let color = sortingstep.step_message_color;
