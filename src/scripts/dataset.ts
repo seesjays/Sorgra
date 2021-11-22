@@ -938,6 +938,44 @@ export class SortingOperationFactory {
         // the steps are already done, there's no "stopping point" as there is in a generator.
         // Hopefully with this newfound knowledge of the potential for recursion, I can implement this alg quicker.
 
+
+        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number): void => 
+        {
+            let i = start_ind;
+            let j = middle_ind;
+  
+            for (let current_el = start_ind; current_el < end_ind; current_el++)
+            {
+                if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j]))
+                {
+                    arraytwo[current_el] = arrayone[i];
+                    i += 1;
+                }
+                else
+                {
+                    arraytwo[current_el] = arrayone[j];
+                    j += 1;
+                }
+            }
+        }
+
+        const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number): void => {
+            if (end_ind - start_ind <= 1) return;
+
+            let middle_ind = (end_ind + start_ind)/2;
+            
+            split_elements(arrayone, arraytwo, start_ind, middle_ind);
+            split_elements(arrayone, arraytwo, middle_ind, end_ind);
+
+            merge_elements(arraytwo, arrayone, start_ind, middle_ind, end_ind);
+        }
+
+        const mergesort_topdown = (itemarray: number[]): void =>
+        {
+            let work_array = [...itemarray];
+            split_elements(work_array, itemarray, 0, work_array.length)
+        }
+
         let sort_steps: SortStep[] = [];
         const messages: MessageSet = 
         [
@@ -947,6 +985,7 @@ export class SortingOperationFactory {
 
         sort_steps.push({ highlights: [], message: 0 });
 
+        mergesort_topdown(this.data_y);
 
         sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length-1, });
 
