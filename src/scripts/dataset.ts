@@ -939,6 +939,15 @@ export class SortingOperationFactory {
         // Hopefully with this newfound knowledge of the potential for recursion, I can implement this alg quicker.
 
 
+        // The nature of this algorithm requires that a new method
+        // be devised for displaying it. To accurately explain this in a format
+        // understandable to learners, it only makes sense to use an array-based display, not a chart based one.
+        // If I were to use charts, that would prove to be entirely too complex and require a complete foundational rewrite
+        // (ignoring the obvious issues that arise from the already egregious logic and memory use)
+        // Thus, taking inspiration from many other instances of merge sort explanations,
+        // I will be creating a layered block display.
+
+
         const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number): void => 
         {
             let i = start_ind;
