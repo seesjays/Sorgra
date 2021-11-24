@@ -7,17 +7,32 @@ type HighlightedIndex = {
     excl_indices?: number[];
 }
 
-type StepChange = [number, number];
+type HighlightedBlockLayer = {
+    color: HIGHLIGHT_TYPE;
+    list: number;
+    indices: number[];
+    excl_indices?: number[];
+}
 
 type ColoredMessage = [string, HIGHLIGHT_TYPE];
 export type MessageSet = ColoredMessage[] | string[];
 
+type StepChange = [number, number];
+
+type BlockModification = {
+    layer: number;
+    new_child?: [number, number[]];
+    replace_child?: [number, number, number[]];
+    add_list?: number;
+    remove_list?: number;
+}
+
 type SortStep = {
-    highlights: HighlightedIndex[];
+    highlights: HighlightedIndex[] | HighlightedBlockLayer[];
     keep_prev_highlight?: boolean;
     message: number;
     step_message_color?: HIGHLIGHT_TYPE;
-    changes?: StepChange[];
+    changes?: StepChange[] | BlockModification[];
 }
 
 interface SortingOperation {
@@ -947,6 +962,14 @@ export class SortingOperationFactory {
         // Thus, taking inspiration from many other instances of merge sort explanations,
         // I will be creating a layered block display.
 
+        let sort_steps: SortStep[] = [];
+        let step: SortStep;
+
+        const messages: MessageSet = 
+        [
+            ["Merge Sort", HIGHLIGHT_TYPE.BASE],
+            ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
+        ];
 
         const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number): void => 
         {
@@ -984,13 +1007,6 @@ export class SortingOperationFactory {
             let work_array = [...itemarray];
             split_elements(work_array, itemarray, 0, work_array.length)
         }
-
-        let sort_steps: SortStep[] = [];
-        const messages: MessageSet = 
-        [
-            ["Merge Sort", HIGHLIGHT_TYPE.BASE],
-            ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
-        ];
 
         sort_steps.push({ highlights: [], message: 0 });
 
