@@ -247,7 +247,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 					padding={{ xs: "0.5em", md: "5%" }}
 					width={{ xs: "100%", md: "60%" }}
 				>
-					<SortingChartContainer chart_data={this.state.step} />
+					<SortingChartContainer chart_data={this.state.step} true_max={this.state.steps_controller.get_max_y()} />
 				</Box>
 				<Stack
 					justifyContent={{ xs: "center", md: "flex-end" }}

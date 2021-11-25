@@ -51,7 +51,7 @@ export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "
 type AlgorithmData = Record<Algorithms, algorithm>;
 
 export class SortingOperationFactory {
-    private data_set_size: number = 20;
+    private data_set_size: number = 8;
 
     private data_x: number[];
     private data_original: number[]; // Returning to original dataset
@@ -73,7 +73,6 @@ export class SortingOperationFactory {
             "Insertion Sort": { generate: () => this.generate_insertionsort_steps() },
             "Quick Sort": { generate: () => this.generate_quicksort_steps() },
             "Merge Sort": { generate: () => this.generate_mergesort_steps() }
-
         }
     }
 
@@ -120,7 +119,7 @@ export class SortingOperationFactory {
 
         let inds: number[] = [];
 
-        for (let ind = low; ind <= high; ind++) {
+        for (let ind = low; ind < high; ind++) {
             inds.push(ind)
         }
 
@@ -958,61 +957,120 @@ export class SortingOperationFactory {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
 
-        const messages: MessageSet = 
-        [
-            ["Merge Sort", HIGHLIGHT_TYPE.BASE],
-            ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
-        ];
+        const messages: MessageSet =
+            [
+                ["Merge Sort", HIGHLIGHT_TYPE.BASE],
+                ["Merging", HIGHLIGHT_TYPE.BASE],
+                ["Splerging", HIGHLIGHT_TYPE.BASE],
+                ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
+            ];
 
-        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void => 
-        {
+        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void => {
             call_layer++;
+
+            let i = start_ind;
+            let j = middle_ind;
+
             step = {
                 highlights: [
                     {
                         color: HIGHLIGHT_TYPE.SELECTED,
-                        indices: this.create_range(start_ind, end_ind),
-                    }
+                        indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind)),
+                    },
                 ],
-                message: 0,
+                message: 2,
             }
             sort_steps.push(step);
+            console.log(arraytwo);
 
-            let i = start_ind;
-            let j = middle_ind;
-  
-            for (let current_el = start_ind; current_el < end_ind; current_el++)
-            {
-                if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j]))
-                {
+            for (let current_el = start_ind; current_el < end_ind; current_el++) {
+                if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j])) {
                     arraytwo[current_el] = arrayone[i];
                     i += 1;
+
+                    const replace_x_with_y: StepChange = [current_el, arraytwo[current_el]];
+
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind)),
+                            },
+
+                        ],
+                        message: 1,
+                        changes: [replace_x_with_y]
+                    }
+
+                    sort_steps.push(step);
                 }
-                else
-                {
+                else {
                     arraytwo[current_el] = arrayone[j];
                     j += 1;
+
+                    const replace_x_with_y: StepChange = [current_el, arraytwo[current_el]];
+
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.SELECTED,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind)),
+                            },
+
+                        ],
+                        message: 1,
+                        changes: [replace_x_with_y]
+                    }
+
+                    sort_steps.push(step);
                 }
+                console.log(arraytwo);
             }
+
+            console.log(this.data_y)
+            console.log(arraytwo);
         }
 
         const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void => {
             call_layer++;
 
-            if (end_ind - start_ind <= 1) return;
+            step = {
+                highlights: [
+                    {
+                        color: HIGHLIGHT_TYPE.SELECTED,
+                        indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind)),
+                    },
 
-            let middle_ind = (end_ind + start_ind)/2;
-            
-            split_elements(arrayone, arraytwo, start_ind, middle_ind, call_layer);
-            split_elements(arrayone, arraytwo, middle_ind, end_ind, call_layer);
+                ],
+                message: 1,
+            }
+            console.log(`${call_layer}: ${Math.floor(start_ind)} - ${Math.floor(end_ind)}`);
 
-            merge_elements(arraytwo, arrayone, start_ind, middle_ind, end_ind, call_layer);
+            if (end_ind - start_ind <= 1) {
+                sort_steps.push(step);
+                return;
+            }
+
+            let middle_ind = Math.floor((end_ind + start_ind) / 2);
+
+            // more than 1 el,
+            step.highlights.push({
+                color: HIGHLIGHT_TYPE.SEEKING,
+                indices: [Math.floor(middle_ind)],
+            });
+            sort_steps.push(step);
+
+
+            split_elements(arraytwo, arrayone, start_ind, middle_ind, call_layer);
+            split_elements(arraytwo, arrayone, middle_ind, end_ind, call_layer);
+
+            merge_elements(arrayone, arraytwo, start_ind, middle_ind, end_ind, call_layer);
         }
 
-        const mergesort_topdown = (itemarray: number[]): void =>
-        {
+        const mergesort_topdown = (itemarray: number[]): void => {
             let work_array = [...itemarray];
-            split_elements(work_array, itemarray, 0, work_array.length, 0);
+            split_elements(itemarray, work_array, 0, work_array.length, 0);
+            console.log(work_array);
         }
 
         const mergesort = (list: number[], rec_level: number): number[] => {
@@ -1021,40 +1079,34 @@ export class SortingOperationFactory {
             let left: number[] = [];
             let right: number[] = [];
 
-            for (let index in list)
-            {
-                if (Number.parseInt(index) < (list.length)/2)
-                {
+            for (let index in list) {
+                if (Number.parseInt(index) < (list.length) / 2) {
                     left.push(list[Number.parseInt(index)]);
                 }
-                else
-                {
+                else {
                     right.push(list[Number.parseInt(index)]);
                 }
             }
 
             sort_steps.push(step);
 
-            left = mergesort(left, rec_level+1);
-            right = mergesort(right, rec_level+1);
-            
+            left = mergesort(left, rec_level + 1);
+            right = mergesort(right, rec_level + 1);
+
             return mergesort_merge(left, right, rec_level);
         }
-        
+
         const mergesort_merge = (left: number[], right: number[], rec_level: number): number[] => {
             let result: number[] = [];
             let left_head = 0;
             let right_head = 0;
 
-            while (left_head < left.length && right_head < right.length)
-            {
-                if (left[left_head] <= right[right_head])
-                {
+            while (left_head < left.length && right_head < right.length) {
+                if (left[left_head] <= right[right_head]) {
                     result.push(left[left_head]);
                     left_head++;
                 }
-                else
-                {
+                else {
                     result.push(right[right_head]);
                     right_head++;
                 }
@@ -1065,20 +1117,19 @@ export class SortingOperationFactory {
                 result.push(left[left_head]);
                 left_head++;
             }
-            while (right_head < right.length)
-            {
+            while (right_head < right.length) {
                 result.push(right[right_head]);
                 right_head++;
             }
 
             return result;
-        } 
+        }
 
         sort_steps.push({ highlights: [], message: 0 });
 
         mergesort_topdown(this.data_y);
 
-        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length-1, });
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length - 1, });
 
         this.return_to_original();
 
@@ -1166,6 +1217,10 @@ export class SortingOperationController {
             ],
         };
     };
+
+    public get_max_y(): number {
+        return Math.max(...this.data_y_original);
+    }
 
     private highlight_step(sortingstep: SortStep): ChartData {
         let step_highlights = sortingstep.highlights;
