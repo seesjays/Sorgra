@@ -28,11 +28,11 @@ type BlockModification = {
 }
 
 type SortStep = {
-    highlights: HighlightedIndex[] | HighlightedBlockLayer[];
+    highlights: HighlightedIndex[];
     keep_prev_highlight?: boolean;
     message: number;
     step_message_color?: HIGHLIGHT_TYPE;
-    changes?: StepChange[] | BlockModification[];
+    changes?: StepChange[];
 }
 
 interface SortingOperation {
@@ -46,7 +46,7 @@ interface algorithm {
     generate(): SortingOperation;
 }
 
-export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort";
+export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort" | "Merge Sort";
 
 type AlgorithmData = Record<Algorithms, algorithm>;
 
@@ -71,7 +71,9 @@ export class SortingOperationFactory {
             "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
             "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
             "Insertion Sort": { generate: () => this.generate_insertionsort_steps() },
-            "Quick Sort": { generate: () => this.generate_quicksort_steps() }
+            "Quick Sort": { generate: () => this.generate_quicksort_steps() },
+            "Merge Sort": { generate: () => this.generate_mergesort_steps() }
+
         }
     }
 
@@ -953,15 +955,6 @@ export class SortingOperationFactory {
         // the steps are already done, there's no "stopping point" as there is in a generator.
         // Hopefully with this newfound knowledge of the potential for recursion, I can implement this alg quicker.
 
-
-        // The nature of this algorithm requires that a new method
-        // be devised for displaying it. To accurately explain this in a format
-        // understandable to learners, it only makes sense to use an array-based display, not a chart based one.
-        // If I were to use charts, that would prove to be entirely too complex and require a complete foundational rewrite
-        // (ignoring the obvious issues that arise from the already egregious logic and memory use)
-        // Thus, taking inspiration from many other instances of merge sort explanations,
-        // I will be creating a layered block display.
-
         let sort_steps: SortStep[] = [];
         let step: SortStep;
 
@@ -971,8 +964,20 @@ export class SortingOperationFactory {
             ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
         ];
 
-        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number): void => 
+        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void => 
         {
+            call_layer++;
+            step = {
+                highlights: [
+                    {
+                        color: HIGHLIGHT_TYPE.SELECTED,
+                        indices: this.create_range(start_ind, end_ind),
+                    }
+                ],
+                message: 0,
+            }
+            sort_steps.push(step);
+
             let i = start_ind;
             let j = middle_ind;
   
@@ -991,22 +996,83 @@ export class SortingOperationFactory {
             }
         }
 
-        const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number): void => {
+        const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void => {
+            call_layer++;
+
             if (end_ind - start_ind <= 1) return;
 
             let middle_ind = (end_ind + start_ind)/2;
             
-            split_elements(arrayone, arraytwo, start_ind, middle_ind);
-            split_elements(arrayone, arraytwo, middle_ind, end_ind);
+            split_elements(arrayone, arraytwo, start_ind, middle_ind, call_layer);
+            split_elements(arrayone, arraytwo, middle_ind, end_ind, call_layer);
 
-            merge_elements(arraytwo, arrayone, start_ind, middle_ind, end_ind);
+            merge_elements(arraytwo, arrayone, start_ind, middle_ind, end_ind, call_layer);
         }
 
         const mergesort_topdown = (itemarray: number[]): void =>
         {
             let work_array = [...itemarray];
-            split_elements(work_array, itemarray, 0, work_array.length)
+            split_elements(work_array, itemarray, 0, work_array.length, 0);
         }
+
+        const mergesort = (list: number[], rec_level: number): number[] => {
+            if (list.length <= 1) return list;
+
+            let left: number[] = [];
+            let right: number[] = [];
+
+            for (let index in list)
+            {
+                if (Number.parseInt(index) < (list.length)/2)
+                {
+                    left.push(list[Number.parseInt(index)]);
+                }
+                else
+                {
+                    right.push(list[Number.parseInt(index)]);
+                }
+            }
+
+            sort_steps.push(step);
+
+            left = mergesort(left, rec_level+1);
+            right = mergesort(right, rec_level+1);
+            
+            return mergesort_merge(left, right, rec_level);
+        }
+        
+        const mergesort_merge = (left: number[], right: number[], rec_level: number): number[] => {
+            let result: number[] = [];
+            let left_head = 0;
+            let right_head = 0;
+
+            while (left_head < left.length && right_head < right.length)
+            {
+                if (left[left_head] <= right[right_head])
+                {
+                    result.push(left[left_head]);
+                    left_head++;
+                }
+                else
+                {
+                    result.push(right[right_head]);
+                    right_head++;
+                }
+            }
+
+            // get the rest of the elements when one list is expended
+            while (left_head < left.length) {
+                result.push(left[left_head]);
+                left_head++;
+            }
+            while (right_head < right.length)
+            {
+                result.push(right[right_head]);
+                right_head++;
+            }
+
+            return result;
+        } 
 
         sort_steps.push({ highlights: [], message: 0 });
 
