@@ -40,7 +40,7 @@ type AlgoSimState = {
 
 	data_set_size: number;
 	steps_controller: SortingOperationController;
-	step: ChartData;
+	step: ChartData[];
 	step_message_history: [number[], HIGHLIGHT_TYPE[]];
 	algorithm: Algorithms;
 
@@ -51,8 +51,8 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 
 	constructor(props: AlgoSimProps) {
 		super(props);
-		const start_alg: Algorithms = "Quick Sort";
-		const set_len = 40;
+		const start_alg: Algorithms = "Merge Sort";
+		const set_len = 9;
 
 		this.props.sorting_operation_factory.set_dataset_size(set_len);
 		let operation =

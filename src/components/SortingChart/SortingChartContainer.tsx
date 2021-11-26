@@ -1,16 +1,41 @@
 import React, { useState } from "react";
-import { ChartOptions, ChartData } from "chart.js";
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+	ChartOptions,
+	ChartData,
+	CoreChartOptions,
+} from "chart.js";
+
 import { Bar } from "react-chartjs-2";
+
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
+import { LineAnnotation } from "../../scripts/dataset";
+
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend
+);
 
 type SortingChartContainerProps = {
-	chart_data: ChartData;
+	chart_data: ChartData[];
+	true_max: number;
+	annotations?: LineAnnotation[];
 };
 
 const chart_options: ChartOptions = {
 	maintainAspectRatio: true,
-	aspectRatio: 1,
+	aspectRatio: 2,
 	animation: false,
 	responsive: true,
 	layout: {
@@ -40,16 +65,24 @@ const ContainerPaper = styled(Paper)(({ theme }) => ({
 	margin: "0.1rem 0",
 }));
 
-export const SortingChartContainer = (
-	chartdata: SortingChartContainerProps
-) => {
+export const SortingChartContainer = ({
+	chart_data,
+	true_max,
+}: SortingChartContainerProps) => {
+	if (chart_options.scales?.yAxes) {
+		chart_options.scales.yAxes.max = true_max;
+	}
+
+	let chartsze = chart_data.length;
+
+	chart_options.aspectRatio = chartsze;
+
+	// aux should always be below actual
+	const charts = chart_data.map((chart_data) => <Bar options={chart_options as CoreChartOptions<"bar">} data={chart_data as ChartData<"bar", number[]>} />);
+
 	return (
-		<ContainerPaper
-			elevation={2}
-			sx={{
-			}}
-		>
-			<Bar data={chartdata.chart_data} options={chart_options} />
+		<ContainerPaper elevation={2} sx={{}}>
+			{charts}
 		</ContainerPaper>
 	);
 };
