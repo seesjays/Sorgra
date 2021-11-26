@@ -27,24 +27,16 @@ type BlockModification = {
     remove_list?: number;
 }
 
-export type LineAnnotation = {
-    x: number;
-    color: HIGHLIGHT_TYPE;
-    aux: boolean;
-}
-
 type SortStep = {
     highlights: HighlightedIndex[];
     aux_highlights?: HighlightedIndex[];
     keep_prev_highlight?: boolean;
-    
+
     message: number;
     step_message_color?: HIGHLIGHT_TYPE;
-    
+
     changes?: StepChange[];
     aux_changes?: StepChange[];
-
-    annots?: LineAnnotation[];
 }
 
 interface SortingOperation {
@@ -874,17 +866,29 @@ export class SortingOperationFactory {
         const messages: MessageSet =
             [
                 ["Merge Sort", HIGHLIGHT_TYPE.BASE],
-                ["Splitting: Calculated midpoint.", HIGHLIGHT_TYPE.SELECTED],
-                
-                ["Splitting: Recursively splitting subarray to the left of the midpoint.", HIGHLIGHT_TYPE.SEEKING],
-                ["Splitting: Recursively splitting subarray to the right of the midpoint.", HIGHLIGHT_TYPE.SEEKING],
+                ["Splitting: Divided subarray into halves.", HIGHLIGHT_TYPE.SELECTED],
+
+                ["Splitting: Recursively splitting left subarray.", HIGHLIGHT_TYPE.SEEKING],
+                ["Splitting: Recursively splitting right subarray.", HIGHLIGHT_TYPE.SEEKING],
 
                 ["Splitting: Reached base case of 1 or fewer elements, moving up a recursion level.", HIGHLIGHT_TYPE.CORRECTED],
 
                 ["Splitting: Finished splitting both subarrays at this level of recursion, now merging subarrays.", HIGHLIGHT_TYPE.DISCREPANCY],
 
-                ["Merging.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
                 
+                ["Merging: Left marked element < right marked element, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Right marked element is outside subarray, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
+                
+                ["Merging: Left marked element >= right marked element, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Left marked element is past subarray midpoint, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
+
+                ["Merging: Replaced selected element with left marked element from work array, incremented left mark.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Replaced selected element with right marked element from work array, incremented right mark.", HIGHLIGHT_TYPE.DISCREPANCY],
+
+                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
+
                 ["Finished merging elements, moving up a level of recursion.", HIGHLIGHT_TYPE.BASE],
                 ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
             ];
@@ -896,50 +900,202 @@ export class SortingOperationFactory {
             let j = middle_ind;
 
             for (let current_el = start_ind; current_el < end_ind; current_el++) {
+                step = {
+                    highlights: [
+                        {
+                            color: HIGHLIGHT_TYPE.DIM_BASE,
+                            indices: [],
+                            excl_indices: [],
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.BASE,
+                            indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SELECTED,
+                            indices: [current_el],
+                        },
+                    ],
+                    aux_highlights: [
+                        {
+                            color: HIGHLIGHT_TYPE.DIM_BASE,
+                            indices: [],
+                            excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SEEKING,
+                            indices: [i],
+                        },
+                        {
+                            color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                            indices: [j],
+                        },
+                    ],
+                    message: 6
+                }
+                sort_steps.push(step);
+
                 if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j])) {
-                    arraytwo[current_el] = arrayone[i];
-                    i += 1;
-                    
-                    const set_real_from_work_arr: StepChange = [current_el, arraytwo[current_el]];
+                    let sel_msg = 7;
+                    if (j >= end_ind) sel_msg = 8;
 
                     step = {
                         highlights: [
                             {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind) - 1),
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: [],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [current_el],
+                            },
+                        ],
+                        aux_highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [i],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                indices: [j],
+                            },
+                        ],
+                        message: sel_msg
+                    }
+                    sort_steps.push(step);
+
+                    arraytwo[current_el] = arrayone[i];
+
+                    const set_real_from_work_arr: StepChange = [current_el, arraytwo[current_el]];
+                    i += 1;
+
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: [],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [current_el],
+                            },
+                        ],
+                        aux_highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [i],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
+                                indices: [j],
                             },
                         ],
                         changes: [set_real_from_work_arr],
-                        message: 6
+                        message: 11
                     }
-
                     sort_steps.push(step);
                 }
                 else {
+                    let sel_msg = 9;
+                    if (i >= middle_ind) sel_msg = 10;
+                    
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: [],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [current_el],
+                            },
+                        ],
+                        aux_highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: [i],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [j],
+                            },
+                        ],
+                        message: sel_msg
+                    }
+                    sort_steps.push(step);
+
                     arraytwo[current_el] = arrayone[j];
-                    j += 1;
 
                     const set_real_from_work_arr: StepChange = [current_el, arraytwo[current_el]];
+                    j += 1;
 
                     step = {
                         highlights: [
                             {
-                                color: HIGHLIGHT_TYPE.SELECTED,
-                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind)),
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: [],
                             },
-
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [current_el],
+                            },
+                        ],
+                        aux_highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_BASE,
+                                indices: [],
+                                excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: [i],
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [j],
+                            },
                         ],
                         changes: [set_real_from_work_arr],
-                        message: 6
+                        message: 12
                     }
-
                     sort_steps.push(step);
                 }
-                console.log(arraytwo);
             }
-
-            console.log(this.data_y)
-            console.log(arraytwo);
         }
 
         const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void => {
@@ -957,12 +1113,12 @@ export class SortingOperationFactory {
                         },
                         {
                             color: HIGHLIGHT_TYPE.CORRECTED,
-                            indices: [Math.floor((start_ind + end_ind)/2)],
+                            indices: [Math.floor((start_ind + end_ind) / 2)],
                         },
                     ],
                     message: 4
                 }
-                
+
                 sort_steps.push(step);
                 return;
             }
@@ -983,10 +1139,6 @@ export class SortingOperationFactory {
                     {
                         color: HIGHLIGHT_TYPE.DIM_SEEKING,
                         indices: this.create_range(Math.floor(middle_ind), Math.floor(end_ind), true)
-                    },
-                    {
-                        color: HIGHLIGHT_TYPE.SELECTED,
-                        indices: [Math.floor(middle_ind)],
                     },
                 ],
                 message: 2
@@ -1010,17 +1162,13 @@ export class SortingOperationFactory {
                         color: HIGHLIGHT_TYPE.SEEKING,
                         indices: this.create_range(Math.floor(middle_ind), Math.floor(end_ind), true)
                     },
-                    {
-                        color: HIGHLIGHT_TYPE.SELECTED,
-                        indices: [Math.floor(middle_ind)],
-                    },
                 ],
                 message: 3
             }
             sort_steps.push(step);
 
             split_elements(arraytwo, arrayone, middle_ind, end_ind, call_layer);
-            
+
             step = {
                 highlights: [
                     {
@@ -1031,10 +1179,6 @@ export class SortingOperationFactory {
                     {
                         color: HIGHLIGHT_TYPE.DISCREPANCY,
                         indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true)
-                    },
-                    {
-                        color: HIGHLIGHT_TYPE.SELECTED,
-                        indices: [Math.floor(middle_ind)],
                     },
                 ],
                 message: 5
@@ -1055,13 +1199,13 @@ export class SortingOperationFactory {
                         indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true)
                     },
                 ],
-                message: 7
+                message: 15
             }
             sort_steps.push(step);
         }
 
         const mergesort_topdown = (itemarray: number[]): void => {
-            let work_array = [...itemarray];
+            let work_array = this.aux_data_y;
             split_elements(itemarray, work_array, 0, work_array.length, 0);
             console.log(work_array);
         }
@@ -1074,7 +1218,7 @@ export class SortingOperationFactory {
 
         this.return_to_original();
 
-        return { name: "Merge Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y], data_y_aux: [...this.data_y]};
+        return { name: "Merge Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y], data_y_aux: [...this.data_y] };
     }
 
     private randomize_y(): void {
@@ -1223,6 +1367,35 @@ export class SortingOperationController {
         return this.get_chart_dataset();
     }
 
+    private highlight_aux(sortingstep: SortStep): void {
+        let step_highlights = sortingstep.aux_highlights;
+        if (!sortingstep.keep_prev_highlight) {
+            this.aux_highlights.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
+        }
+
+        if (step_highlights) {
+            for (let highlight of step_highlights) {
+                if (highlight.excl_indices) {
+                    let selected_color = this.highlight_cols[highlight.color];
+
+                    for (let i = 0; i < this.data_x.length; i++) {
+                        if (!highlight.excl_indices.includes(i)) {
+                            this.aux_highlights[i] = selected_color;
+                        }
+                    }
+                }
+                else {
+                    let selected_color = this.highlight_cols[highlight.color];
+                    for (let indice of highlight.indices) {
+                        this.aux_highlights[indice] = selected_color;
+                    }
+                }
+            }
+
+            return;
+        }
+    }
+
     private enact_step_changes(sortingstep: SortStep): void {
         let changes = sortingstep.changes;
         if (changes !== undefined) {
@@ -1254,6 +1427,8 @@ export class SortingOperationController {
         if (!this.complete) {
             this.step_counter += 1;
             this.highlight_step(this.operation.steps[this.step_counter]);
+            this.highlight_aux(this.operation.steps[this.step_counter]);
+
             this.enact_step_changes(this.operation.steps[this.step_counter]);
             this.update_message_history(this.operation.steps[this.step_counter]);
         }
@@ -1272,7 +1447,6 @@ export class SortingOperationController {
 
         this.data_highlights = new Array(this.operation.data_y.length).fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
         this.aux_highlights = [...this.data_highlights];
-
 
         this.operation.data_y = [...this.data_y_original];
         if (this.operation.data_y_aux) this.operation.data_y_aux = [...this.data_y_original];

@@ -16,7 +16,6 @@ import { Bar } from "react-chartjs-2";
 
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
-import { LineAnnotation } from "../../scripts/dataset";
 
 ChartJS.register(
 	CategoryScale,
@@ -24,37 +23,12 @@ ChartJS.register(
 	BarElement,
 	Title,
 	Tooltip,
-	Legend
+	Legend,
 );
 
 type SortingChartContainerProps = {
 	chart_data: ChartData[];
 	true_max: number;
-	annotations?: LineAnnotation[];
-};
-
-const chart_options: ChartOptions = {
-	maintainAspectRatio: true,
-	aspectRatio: 2,
-	animation: false,
-	responsive: true,
-	layout: {
-		padding: 5,
-	},
-	plugins: {
-		tooltip: {
-			enabled: false,
-		},
-		legend: { display: false },
-	},
-	scales: {
-		yAxes: {
-			display: false,
-		},
-		xAxes: {
-			display: false,
-		},
-	},
 };
 
 const ContainerPaper = styled(Paper)(({ theme }) => ({
@@ -69,6 +43,30 @@ export const SortingChartContainer = ({
 	chart_data,
 	true_max,
 }: SortingChartContainerProps) => {
+	const chart_options: ChartOptions = {
+		maintainAspectRatio: true,
+		aspectRatio: 2,
+		animation: false,
+		responsive: true,
+		layout: {
+			padding: 5,
+		},
+		plugins: {
+			tooltip: {
+				enabled: false,
+			},
+			legend: { display: false },
+		},
+		scales: {
+			yAxes: {
+				display: false,
+			},
+			xAxes: {
+				display: false,
+			},
+		},
+	};
+	
 	if (chart_options.scales?.yAxes) {
 		chart_options.scales.yAxes.max = true_max;
 	}
@@ -78,7 +76,14 @@ export const SortingChartContainer = ({
 	chart_options.aspectRatio = chartsze;
 
 	// aux should always be below actual
-	const charts = chart_data.map((chart_data) => <Bar options={chart_options as CoreChartOptions<"bar">} data={chart_data as ChartData<"bar", number[]>} />);
+	const charts = chart_data.map((chart_data) => {
+		return (
+			<Bar
+				options={chart_options as CoreChartOptions<"bar">}
+				data={chart_data as ChartData<"bar", number[]>}
+			/>
+		);
+	});
 
 	return (
 		<ContainerPaper elevation={2} sx={{}}>
