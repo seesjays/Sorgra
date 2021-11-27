@@ -14,6 +14,7 @@ import { MessageSet } from "../../scripts/dataset";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
 	width: "90%",
+	background: "rgba(12, 12, 12, 0.2)",
 	margin: "0 auto",
 	padding: "1rem",
 	display: "flex",

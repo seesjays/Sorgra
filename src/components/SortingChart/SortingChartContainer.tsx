@@ -35,7 +35,7 @@ const ContainerPaper = styled(Paper)(({ theme }) => ({
 	height: "fit-content",
 	width: "100%",
 	position: "relative",
-	border: `2px solid ${theme.palette.primary.light}`,
+	border: `2px solid ${theme.palette.divider}`,
 	margin: "0.1rem 0",
 }));
 
