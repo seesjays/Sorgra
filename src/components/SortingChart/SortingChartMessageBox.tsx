@@ -40,13 +40,12 @@ export default function SortingChartMessageBox(
 		<React.Fragment key={Math.random()}>
 			<ListItem
 				sx={{
-					fontSize: "1.25em",
 					padding: "0.5rem 0.5rem",
-					margin: "0.2em 0",
+					margin: {xs: "0.1em 0", md: "0.2em 0"},
 					borderLeft: `4px solid ${val[1]}`,
 				}}
 			>
-				<Typography fontSize={"1.25em"}>{ (Array.isArray(val[0])) ? val[0][0] : val[0]}</Typography>
+				<Typography fontSize={{xs: "1rem", md: "1.45em"}}>{ (Array.isArray(val[0])) ? val[0][0] : val[0]}</Typography>
 			</ListItem>
 			<Divider
 				sx={{
