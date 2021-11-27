@@ -7,25 +7,11 @@ type HighlightedIndex = {
     excl_indices?: number[];
 }
 
-type HighlightedBlockLayer = {
-    color: HIGHLIGHT_TYPE;
-    list: number;
-    indices: number[];
-    excl_indices?: number[];
-}
 
 type ColoredMessage = [string, HIGHLIGHT_TYPE];
 export type MessageSet = ColoredMessage[];
 
 type StepChange = [number, number];
-
-type BlockModification = {
-    layer: number;
-    new_child?: [number, number[]];
-    replace_child?: [number, number, number[]];
-    add_list?: number;
-    remove_list?: number;
-}
 
 type SortStep = {
     highlights: HighlightedIndex[];
@@ -39,7 +25,6 @@ type SortStep = {
     aux_changes?: StepChange[];
     aux_swap?: boolean;
 }
-
 interface SortingOperation {
     name: string;
     steps: SortStep[];
@@ -47,7 +32,6 @@ interface SortingOperation {
     data_y_aux?: number[];
     messages?: ColoredMessage[];
 }
-
 interface algorithm {
     generate(): SortingOperation;
 }
@@ -55,7 +39,6 @@ interface algorithm {
 export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort" | "Merge Sort";
 
 type AlgorithmData = Record<Algorithms, algorithm>;
-
 export class SortingOperationFactory {
     private data_set_size: number = 15;
 
@@ -860,6 +843,8 @@ export class SortingOperationFactory {
         // What a convenience from not using generators! I can make things truly "recursive" because
         // the steps are already done, there's no "stopping point" as there is in a generator.
         // Hopefully with this newfound knowledge of the potential for recursion, I can implement this alg quicker.
+
+        // Turns out implementing a literal second chart wasn't that hard. Good job, me.
 
         let sort_steps: SortStep[] = [];
         let step: SortStep;
