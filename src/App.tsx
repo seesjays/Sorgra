@@ -20,9 +20,9 @@ const theme = createTheme({
 			dark: "#81aba8",
 			contrastText: "#000",
 		},
+		background: { default: "#212329" },
 	},
 });
-
 
 function App() {
 	let factory = new SortingOperationFactory();

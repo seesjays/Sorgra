@@ -53,10 +53,11 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 	return (
 		<ToggleContainer>
 			<Paper
-				elevation={3}
+				variant="outlined"
 				sx={{
+					background: "none",
 					display: "flex",
-					border: (theme) => `2px solid ${theme.palette.primary.light}`,
+					border: (theme) => `2px solid ${theme.palette.divider}`,
 					flexWrap: "wrap",
 					marginTop: "0.5rem",
 					width: "100%",

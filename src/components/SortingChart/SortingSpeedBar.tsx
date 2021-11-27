@@ -78,6 +78,7 @@ export default function SortingSpeedBar(props: SortingSpeedBarProps) {
 					max={Speed.SLOW}
 					onChange={props.handle_speed_change}
 					disabled={props.run_state}
+					color="primary"
 				/>
 
 				<SpeedRoundedIcon fontSize="large" sx={{ marginLeft: "12px" }} />

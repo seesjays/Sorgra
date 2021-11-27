@@ -18,7 +18,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 	padding: "1rem",
 	display: "flex",
 	flexDirection: "column",
-	border: `2px solid ${theme.palette.primary.main}`,
+	border: `2px solid ${theme.palette.divider}`,
 }));
 
 
@@ -56,5 +56,5 @@ export default function SortingChartMessageBox(
 		</React.Fragment>
 	));
 
-	return <StyledPaper variant="outlined">{messages}</StyledPaper>;
+	return <StyledPaper variant="elevation" elevation={1}>{messages}</StyledPaper>;
 }
