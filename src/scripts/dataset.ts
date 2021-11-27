@@ -37,6 +37,7 @@ type SortStep = {
 
     changes?: StepChange[];
     aux_changes?: StepChange[];
+    aux_swap?: boolean;
 }
 
 interface SortingOperation {
@@ -876,11 +877,11 @@ export class SortingOperationFactory {
                 ["Splitting: Finished splitting both subarrays at this level of recursion, now merging subarrays.", HIGHLIGHT_TYPE.DISCREPANCY],
 
                 ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
-                
-                ["Merging: Left marked element < right marked element, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
+
+                ["Merging: Left marked element <= right marked element, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
                 ["Merging: Right marked element is outside subarray, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
-                
-                ["Merging: Left marked element >= right marked element, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
+
+                ["Merging: Left marked element > right marked element, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
                 ["Merging: Left marked element is past subarray midpoint, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
 
                 ["Merging: Replaced selected element with left marked element from work array, incremented left mark.", HIGHLIGHT_TYPE.DISCREPANCY],
@@ -889,15 +890,19 @@ export class SortingOperationFactory {
                 ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
                 ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
 
-                ["Finished merging elements, moving up a level of recursion.", HIGHLIGHT_TYPE.BASE],
+                ["Finished merging elements, moving up a level of recursion.", HIGHLIGHT_TYPE.CORRECTED],
                 ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
             ];
 
         const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void => {
             call_layer++;
 
+            let swapped_arrays = false;
+            if (arraytwo === this.aux_data_y) swapped_arrays = true;
+
             let i = start_ind;
             let j = middle_ind;
+
 
             for (let current_el = start_ind; current_el < end_ind; current_el++) {
                 step = {
@@ -931,6 +936,7 @@ export class SortingOperationFactory {
                             indices: [j],
                         },
                     ],
+                    aux_swap: swapped_arrays,
                     message: 6
                 }
                 sort_steps.push(step);
@@ -970,6 +976,7 @@ export class SortingOperationFactory {
                                 indices: [j],
                             },
                         ],
+                        aux_swap: swapped_arrays,
                         message: sel_msg
                     }
                     sort_steps.push(step);
@@ -1011,6 +1018,7 @@ export class SortingOperationFactory {
                             },
                         ],
                         changes: [set_real_from_work_arr],
+                        aux_swap: swapped_arrays,
                         message: 11
                     }
                     sort_steps.push(step);
@@ -1018,7 +1026,7 @@ export class SortingOperationFactory {
                 else {
                     let sel_msg = 9;
                     if (i >= middle_ind) sel_msg = 10;
-                    
+
                     step = {
                         highlights: [
                             {
@@ -1050,6 +1058,7 @@ export class SortingOperationFactory {
                                 indices: [j],
                             },
                         ],
+                        aux_swap: swapped_arrays,
                         message: sel_msg
                     }
                     sort_steps.push(step);
@@ -1091,6 +1100,7 @@ export class SortingOperationFactory {
                             },
                         ],
                         changes: [set_real_from_work_arr],
+                        aux_swap: swapped_arrays,
                         message: 12
                     }
                     sort_steps.push(step);
@@ -1100,6 +1110,10 @@ export class SortingOperationFactory {
 
         const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void => {
             call_layer++;
+
+            let swapped_arrays = false;
+            if (arraytwo === this.aux_data_y) swapped_arrays = true;
+
             console.log(`${call_layer}: ${Math.floor(start_ind)} - ${Math.floor(end_ind)}`);
 
             if (end_ind - start_ind <= 1) {
@@ -1116,6 +1130,7 @@ export class SortingOperationFactory {
                             indices: [Math.floor((start_ind + end_ind) / 2)],
                         },
                     ],
+                    aux_swap: swapped_arrays,
                     message: 4
                 }
 
@@ -1141,6 +1156,7 @@ export class SortingOperationFactory {
                         indices: this.create_range(Math.floor(middle_ind), Math.floor(end_ind), true)
                     },
                 ],
+                aux_swap: swapped_arrays,
                 message: 2
             }
             sort_steps.push(step);
@@ -1163,6 +1179,7 @@ export class SortingOperationFactory {
                         indices: this.create_range(Math.floor(middle_ind), Math.floor(end_ind), true)
                     },
                 ],
+                aux_swap: swapped_arrays,
                 message: 3
             }
             sort_steps.push(step);
@@ -1181,6 +1198,7 @@ export class SortingOperationFactory {
                         indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true)
                     },
                 ],
+                aux_swap: swapped_arrays,
                 message: 5
             }
             sort_steps.push(step);
@@ -1199,6 +1217,7 @@ export class SortingOperationFactory {
                         indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true)
                     },
                 ],
+                aux_swap: swapped_arrays,
                 message: 15
             }
             sort_steps.push(step);
@@ -1339,68 +1358,62 @@ export class SortingOperationController {
         return Math.max(...this.data_y_original);
     }
 
-    private highlight_step(sortingstep: SortStep): ChartData[] {
-        let step_highlights = sortingstep.highlights;
-
-        if (!sortingstep.keep_prev_highlight) {
-            this.data_highlights.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
+    private highlight(highlights: HighlightedIndex[], target: string[], keep_prev?: boolean): void {
+        if (!keep_prev) {
+            target.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
         }
 
-        for (let highlight of step_highlights) {
+        for (let highlight of highlights) {
             if (highlight.excl_indices) {
                 let selected_color = this.highlight_cols[highlight.color];
 
                 for (let i = 0; i < this.data_x.length; i++) {
                     if (!highlight.excl_indices.includes(i)) {
-                        this.data_highlights[i] = selected_color;
+                        target[i] = selected_color;
                     }
                 }
             }
             else {
                 let selected_color = this.highlight_cols[highlight.color];
+
                 for (let indice of highlight.indices) {
-                    this.data_highlights[indice] = selected_color;
+                    target[indice] = selected_color;
                 }
             }
         }
 
-        return this.get_chart_dataset();
+        return;
     }
 
-    private highlight_aux(sortingstep: SortStep): void {
-        let step_highlights = sortingstep.aux_highlights;
-        if (!sortingstep.keep_prev_highlight) {
-            this.aux_highlights.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
+    private informed_highlight(sortingstep: SortStep): void {
+        let default_target = sortingstep.aux_swap ? this.aux_highlights : this.data_highlights;
+        let aux_target = sortingstep.aux_swap ? this.data_highlights : this.aux_highlights;
+
+        this.highlight(sortingstep.highlights, default_target, sortingstep.keep_prev_highlight);
+
+        if (sortingstep.aux_highlights) {
+            this.highlight(sortingstep.aux_highlights, aux_target, sortingstep.keep_prev_highlight);
+        }
+        else {
+            this.highlight([{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }], aux_target, sortingstep.keep_prev_highlight);
         }
 
-        if (step_highlights) {
-            for (let highlight of step_highlights) {
-                if (highlight.excl_indices) {
-                    let selected_color = this.highlight_cols[highlight.color];
-
-                    for (let i = 0; i < this.data_x.length; i++) {
-                        if (!highlight.excl_indices.includes(i)) {
-                            this.aux_highlights[i] = selected_color;
-                        }
-                    }
-                }
-                else {
-                    let selected_color = this.highlight_cols[highlight.color];
-                    for (let indice of highlight.indices) {
-                        this.aux_highlights[indice] = selected_color;
-                    }
-                }
-            }
-
-            return;
-        }
+        return;
     }
 
     private enact_step_changes(sortingstep: SortStep): void {
-        let changes = sortingstep.changes;
-        if (changes !== undefined) {
+        let changes = sortingstep.aux_swap ? sortingstep.aux_changes : sortingstep.changes;
+        let aux_changes = sortingstep.aux_swap ? sortingstep.changes : sortingstep.aux_changes;
+
+        if (changes) {
             for (let change of changes) {
                 this.operation.data_y[change[0]] = change[1];
+            }
+        }
+
+        if (aux_changes && this.operation.data_y_aux) {
+            for (let change of aux_changes) {
+                this.operation.data_y_aux[change[0]] = change[1];
             }
         }
     }
@@ -1426,8 +1439,7 @@ export class SortingOperationController {
     public next_step(): ChartData[] {
         if (!this.complete) {
             this.step_counter += 1;
-            this.highlight_step(this.operation.steps[this.step_counter]);
-            this.highlight_aux(this.operation.steps[this.step_counter]);
+            this.informed_highlight(this.operation.steps[this.step_counter]);
 
             this.enact_step_changes(this.operation.steps[this.step_counter]);
             this.update_message_history(this.operation.steps[this.step_counter]);
