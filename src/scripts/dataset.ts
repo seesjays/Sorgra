@@ -1195,14 +1195,14 @@ export class SortingOperationFactory {
 
         const mergesort_topdown = (itemarray: number[]): void => {
             let work_array = this.aux_data_y;
-            split_elements(work_array, itemarray, 0, work_array.length, 0);
+            split_elements(itemarray, work_array, 0, work_array.length, 0);
         }
 
         sort_steps.push({ highlights: [], message: 0 });
 
         mergesort_topdown(this.data_y);
 
-        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length - 1, });
+        sort_steps.push({ highlights: [], aux_highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length - 1, });
 
         this.return_to_original();
 
