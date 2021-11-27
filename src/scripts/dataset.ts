@@ -867,30 +867,18 @@ export class SortingOperationFactory {
         const messages: MessageSet =
             [
                 ["Merge Sort", HIGHLIGHT_TYPE.BASE],
-                ["Splitting: Divided subarray into halves.", HIGHLIGHT_TYPE.SELECTED],
-
                 ["Splitting: Recursively splitting left subarray.", HIGHLIGHT_TYPE.SEEKING],
                 ["Splitting: Recursively splitting right subarray.", HIGHLIGHT_TYPE.SEEKING],
-
                 ["Splitting: Reached base case of 1 or fewer elements, moving up a recursion level.", HIGHLIGHT_TYPE.CORRECTED],
-
                 ["Splitting: Finished splitting both subarrays at this level of recursion, now merging subarrays.", HIGHLIGHT_TYPE.DISCREPANCY],
-
-                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
-
+                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.SELECTED],
                 ["Merging: Left marked element <= right marked element, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
                 ["Merging: Right marked element is outside subarray, taking the left.", HIGHLIGHT_TYPE.DISCREPANCY],
-
-                ["Merging: Left marked element > right marked element, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
-                ["Merging: Left marked element is past subarray midpoint, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
-
-                ["Merging: Replaced selected element with left marked element from work array, incremented left mark.", HIGHLIGHT_TYPE.DISCREPANCY],
-                ["Merging: Replaced selected element with right marked element from work array, incremented right mark.", HIGHLIGHT_TYPE.DISCREPANCY],
-
-                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
-                ["Merging: Incremented element replacement index.", HIGHLIGHT_TYPE.DISCREPANCY],
-
-                ["Finished merging elements, moving up a level of recursion.", HIGHLIGHT_TYPE.CORRECTED],
+                ["Merging: Right marked element < left marked element, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Left marked element is at or past subarray midpoint, taking the right.", HIGHLIGHT_TYPE.DISCREPANCY],
+                ["Merging: Replaced selected element with left marked element from work array, incremented left mark.", HIGHLIGHT_TYPE.CORRECTED],
+                ["Merging: Replaced selected element with right marked element from work array, incremented right mark.", HIGHLIGHT_TYPE.CORRECTED],
+                ["Finished merging subarrays, moving up a level of recursion.", HIGHLIGHT_TYPE.CORRECTED],
                 ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
             ];
 
@@ -902,7 +890,6 @@ export class SortingOperationFactory {
 
             let i = start_ind;
             let j = middle_ind;
-
 
             for (let current_el = start_ind; current_el < end_ind; current_el++) {
                 step = {
@@ -937,13 +924,13 @@ export class SortingOperationFactory {
                         },
                     ],
                     aux_swap: swapped_arrays,
-                    message: 6
+                    message: 5
                 }
                 sort_steps.push(step);
 
                 if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j])) {
-                    let sel_msg = 7;
-                    if (j >= end_ind) sel_msg = 8;
+                    let sel_msg = 6;
+                    if (j >= end_ind) sel_msg = 7;
 
                     step = {
                         highlights: [
@@ -1009,7 +996,7 @@ export class SortingOperationFactory {
                                 excl_indices: this.create_range(Math.floor(start_ind), Math.floor(end_ind), true),
                             },
                             {
-                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                color: HIGHLIGHT_TYPE.SEEKING,
                                 indices: [i],
                             },
                             {
@@ -1019,13 +1006,13 @@ export class SortingOperationFactory {
                         ],
                         changes: [set_real_from_work_arr],
                         aux_swap: swapped_arrays,
-                        message: 11
+                        message: 10
                     }
                     sort_steps.push(step);
                 }
                 else {
-                    let sel_msg = 9;
-                    if (i >= middle_ind) sel_msg = 10;
+                    let sel_msg = 8;
+                    if (i >= middle_ind) sel_msg = 9;
 
                     step = {
                         highlights: [
@@ -1095,13 +1082,13 @@ export class SortingOperationFactory {
                                 indices: [i],
                             },
                             {
-                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                color: HIGHLIGHT_TYPE.SEEKING_ALT,
                                 indices: [j],
                             },
                         ],
                         changes: [set_real_from_work_arr],
                         aux_swap: swapped_arrays,
-                        message: 12
+                        message: 11
                     }
                     sort_steps.push(step);
                 }
@@ -1113,8 +1100,6 @@ export class SortingOperationFactory {
 
             let swapped_arrays = false;
             if (arraytwo === this.aux_data_y) swapped_arrays = true;
-
-            console.log(`${call_layer}: ${Math.floor(start_ind)} - ${Math.floor(end_ind)}`);
 
             if (end_ind - start_ind <= 1) {
                 // base case
@@ -1131,7 +1116,7 @@ export class SortingOperationFactory {
                         },
                     ],
                     aux_swap: swapped_arrays,
-                    message: 4
+                    message: 3
                 }
 
                 sort_steps.push(step);
@@ -1157,7 +1142,7 @@ export class SortingOperationFactory {
                     },
                 ],
                 aux_swap: swapped_arrays,
-                message: 2
+                message: 1
             }
             sort_steps.push(step);
 
@@ -1180,7 +1165,7 @@ export class SortingOperationFactory {
                     },
                 ],
                 aux_swap: swapped_arrays,
-                message: 3
+                message: 2
             }
             sort_steps.push(step);
 
@@ -1199,7 +1184,7 @@ export class SortingOperationFactory {
                     },
                 ],
                 aux_swap: swapped_arrays,
-                message: 5
+                message: 4
             }
             sort_steps.push(step);
 
@@ -1218,15 +1203,14 @@ export class SortingOperationFactory {
                     },
                 ],
                 aux_swap: swapped_arrays,
-                message: 15
+                message: 12
             }
             sort_steps.push(step);
         }
 
         const mergesort_topdown = (itemarray: number[]): void => {
             let work_array = this.aux_data_y;
-            split_elements(itemarray, work_array, 0, work_array.length, 0);
-            console.log(work_array);
+            split_elements(work_array, itemarray, 0, work_array.length, 0);
         }
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -1259,7 +1243,7 @@ export class SortingOperationFactory {
     }
 
     public set_dataset_size(size: number): void {
-        if (size < 5 || size > 20) {
+        if (size < 5 || size > 50) {
             return;
         }
 

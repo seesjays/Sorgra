@@ -52,7 +52,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 	constructor(props: AlgoSimProps) {
 		super(props);
 		const start_alg: Algorithms = "Merge Sort";
-		const set_len = 9;
+		const set_len = 12;
 
 		this.props.sorting_operation_factory.set_dataset_size(set_len);
 		let operation =
