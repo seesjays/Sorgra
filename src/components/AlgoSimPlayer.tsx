@@ -16,6 +16,7 @@ import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
 import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
 import { HIGHLIGHT_TYPE } from "../scripts/colormap";
+import { SizeSwitch } from "./SortingChart/SizeSwitch";
 
 export enum Speed {
 	SLOW = 2,
@@ -82,6 +83,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		this.check_completion = this.check_completion.bind(this);
 
 		this.alg_change = this.alg_change.bind(this);
+		this.size_change = this.size_change.bind(this);
 		this.speed_change = this.speed_change.bind(this);
 
 		this.toggle_run = this.toggle_run.bind(this);
@@ -91,7 +93,12 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 
 	retry_sim(): void {
 		let initstep = this.state.steps_controller.retry();
-		this.setState({ step: initstep, complete: false, running: false, step_message_history: this.state.steps_controller.message_history });
+		this.setState({
+			step: initstep,
+			complete: false,
+			running: false,
+			step_message_history: this.state.steps_controller.message_history,
+		});
 	}
 
 	// Creates new ChartData based off of the next step in the steps_controller.
@@ -108,7 +115,10 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		if (!this.state.complete) {
 			const new_step = this.state.steps_controller.next_step();
 			const new_history = this.state.steps_controller.message_history;
-			const still_run = invoker === "button" ? this.state.running : !this.state.steps_controller.complete;
+			const still_run =
+				invoker === "button"
+					? this.state.running
+					: !this.state.steps_controller.complete;
 
 			this.setState({
 				step: new_step,
@@ -144,9 +154,12 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			);
 		let new_controller = new SortingOperationController(new_operation);
 
-		this.setState({
-			steps_controller: new_controller,
-		}, this.retry_sim);
+		this.setState(
+			{
+				steps_controller: new_controller,
+			},
+			this.retry_sim
+		);
 	}
 
 	alg_change(event: SelectChangeEvent): void {
@@ -158,10 +171,21 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 
 		let new_controller = new SortingOperationController(new_operation);
 
-		this.setState({
-			steps_controller: new_controller,
-			algorithm: alg,
-		}, this.retry_sim);
+		this.setState(
+			{
+				steps_controller: new_controller,
+				algorithm: alg,
+			},
+			this.retry_sim
+		);
+	}
+
+	size_change(event: SelectChangeEvent<number>): void {
+		let new_size = event.target.value as number;
+
+		this.props.sorting_operation_factory.set_dataset_size(new_size);
+
+		this.setState({ data_set_size: new_size }, this.randomize_sim);
 	}
 
 	speed_change(_: Event, value: number): void {
@@ -247,18 +271,37 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 					padding={{ xs: "0.5em", md: "5%" }}
 					width={{ xs: "100%", md: "60%" }}
 				>
-					<SortingChartContainer chart_data={this.state.step} true_max={this.state.steps_controller.get_max_y()} />
+					<SortingChartContainer
+						chart_data={this.state.step}
+						true_max={this.state.steps_controller.get_max_y()}
+					/>
 				</Box>
 				<Stack
-					justifyContent={{ xs: "center", md: "flex-end" }}
+					justifyContent={{ xs: "flex-start", md: "flex-end" }}
 					alignItems={"center"}
 					width={{ xs: "100%", md: "40%" }}
 					spacing={{ xs: 2, md: 2 }}
 				>
-					<AlgoSwitch
-						current_alg={this.state.algorithm}
-						handle_change={this.alg_change}
-					/>
+					<Stack
+						direction={"row"}
+						justifyContent={"center"}
+						alignItems={"center"}
+						width={{ xs: "90%", md: "50%" }}
+						marginTop={{ xs: "2%" }}
+						spacing={{ xs: 2, md: 2 }}
+					>
+						<AlgoSwitch
+							current_alg={this.state.algorithm}
+							handle_change={this.alg_change}
+						/>
+						<SizeSwitch
+							min={8}
+							max={20}
+							current_size={this.state.data_set_size}
+							change_size={this.size_change}
+						/>
+					</Stack>
+
 					<SortingChartButtonRow
 						retry={this.retry_sim}
 						randomize={this.randomize_sim}
@@ -271,7 +314,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 						handle_speed_change={this.speed_change}
 						run_state={this.state.running}
 					/>
-					<Box width={"100%"} height="50%">
+					<Box width={"100%"} height="55%">
 						<SortingChartMessageBox
 							messages={this.state.steps_controller.messages}
 							message_ind_history={this.state.step_message_history}
