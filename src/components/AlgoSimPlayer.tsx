@@ -8,7 +8,7 @@ import {
 	Algorithms,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
-import { Icon, IconButton, SelectChangeEvent, Stack } from "@mui/material";
+import { IconButton, SelectChangeEvent, Stack } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
@@ -18,7 +18,7 @@ import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
 import { HIGHLIGHT_TYPE } from "../scripts/colormap";
 import { SizeSwitch } from "./SortingChart/SizeSwitch";
 import SorgraInfo from "./InfoModal";
-import { InfoOutlined, InfoRounded } from "@mui/icons-material";
+import { InfoOutlined } from "@mui/icons-material";
 
 export enum Speed {
 	SLOW = 2,

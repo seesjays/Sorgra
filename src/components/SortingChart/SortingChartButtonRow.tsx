@@ -1,9 +1,5 @@
 import React from "react";
-import { jsx, css } from "@emotion/react";
-import { styled, useTheme } from "@mui/material/styles";
-
-import CasinoIcon from "@mui/icons-material/Casino";
-import ReplayIcon from "@mui/icons-material/Replay";
+import { styled } from "@mui/material/styles";
 
 import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
