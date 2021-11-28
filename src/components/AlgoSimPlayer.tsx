@@ -8,7 +8,7 @@ import {
 	Algorithms,
 } from "../scripts/dataset";
 import { ChartData } from "chart.js";
-import { SelectChangeEvent, Stack } from "@mui/material";
+import { Icon, IconButton, SelectChangeEvent, Stack } from "@mui/material";
 
 import { styled } from "@mui/material/styles";
 import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
@@ -17,6 +17,8 @@ import { Box } from "@mui/system";
 import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
 import { HIGHLIGHT_TYPE } from "../scripts/colormap";
 import { SizeSwitch } from "./SortingChart/SizeSwitch";
+import SorgraInfo from "./InfoModal";
+import { InfoOutlined, InfoRounded } from "@mui/icons-material";
 
 export enum Speed {
 	SLOW = 2,
@@ -32,6 +34,8 @@ const TallStack = styled(Stack)(({ theme }) => ({
 	backgroundColor: theme.palette.background.default,
 }));
 
+const InfoIcon = styled(InfoOutlined)(({ theme }) => ({}));
+
 type AlgoSimProps = {
 	sorting_operation_factory: SortingOperationFactory;
 };
@@ -40,19 +44,24 @@ type AlgoSimState = {
 	complete: boolean;
 
 	data_set_size: number;
-	steps_controller: SortingOperationController;
-	step: ChartData[];
 	step_message_history: [number[], HIGHLIGHT_TYPE[]];
+
+	step: ChartData[];
+	steps_controller: SortingOperationController;
+
 	algorithm: Algorithms;
 
 	speed: Speed;
+
+	info_modal_open: boolean;
+	lud_speeds_enabled: boolean;
 };
 class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 	timer_instance: number;
 
 	constructor(props: AlgoSimProps) {
 		super(props);
-		const start_alg: Algorithms = "Merge Sort";
+		const start_alg: Algorithms = "Bubble Sort";
 		const set_len = 14;
 
 		this.props.sorting_operation_factory.set_dataset_size(set_len);
@@ -75,6 +84,9 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 			algorithm: start_alg,
 
 			speed: Speed.FAST,
+
+			lud_speeds_enabled: false,
+			info_modal_open: false,
 		};
 
 		this.randomize_sim = this.randomize_sim.bind(this);
@@ -89,6 +101,9 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		this.toggle_run = this.toggle_run.bind(this);
 		this.toggle_run_timer = this.toggle_run_timer.bind(this);
 		this.timeordeal = this.timeordeal.bind(this);
+
+		this.toggle_lud_speeds = this.toggle_lud_speeds.bind(this);
+		this.toggle_info_dialog = this.toggle_info_dialog.bind(this);
 	}
 
 	retry_sim(): void {
@@ -192,6 +207,14 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 		this.setState({ speed: value as Speed });
 	}
 
+	toggle_lud_speeds(event: React.ChangeEvent<HTMLInputElement>): void {
+		this.setState({ lud_speeds_enabled: event.target.checked as boolean, speed: Speed.NORMAL });
+	}
+
+	toggle_info_dialog(open: boolean): void {
+		this.setState({ info_modal_open: open });
+	}
+
 	// Simlpy swaps run_state, then toggles the simulation timer
 	toggle_run(_: React.MouseEvent<HTMLElement>, run_state: boolean): void {
 		if (run_state !== null) {
@@ -264,6 +287,14 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 				alignContent="flex-start"
 				spacing={{ xs: 0, md: 0 }}
 			>
+				<SorgraInfo
+					open={this.state.info_modal_open}
+					close={() => {
+						this.toggle_info_dialog(false);
+					}}
+					lud_speeds={this.state.lud_speeds_enabled}
+					change_lud_speeds={this.toggle_lud_speeds}
+				/>
 				<Box
 					display="flex"
 					justifyContent="center"
@@ -300,6 +331,18 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 							current_size={this.state.data_set_size}
 							change_size={this.size_change}
 						/>
+						<IconButton
+							aria-label="info"
+							onClick={() => {
+								this.toggle_info_dialog(true);
+							}}
+						>
+							<InfoOutlined
+								sx={{
+									color: (theme) => theme.palette.primary.main,
+								}}
+							/>
+						</IconButton>
 					</Stack>
 
 					<SortingChartButtonRow
@@ -311,6 +354,8 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 						complete_state={this.state.complete}
 					/>
 					<SortingSpeedBar
+						speed={this.state.speed}
+						lud_speeds={this.state.lud_speeds_enabled}
 						handle_speed_change={this.speed_change}
 						run_state={this.state.running}
 					/>

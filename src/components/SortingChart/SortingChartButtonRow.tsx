@@ -13,6 +13,7 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import { CasinoRounded, ReplayRounded } from "@mui/icons-material";
 
 type SortingChartButtonRowProps = {
 	run_state: boolean;            
@@ -73,12 +74,12 @@ export function SortingChartButtonRow(props: SortingChartButtonRowProps) {
 					<ToggleButton value={false} onClick={() => {
 							props.randomize();
 						}} aria-label="new dataset">
-						<CasinoIcon color="error" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
+						<CasinoRounded color="error" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
 					</ToggleButton>
 					<ToggleButton value={false} onClick={() => {
 							props.retry();
 						}} aria-label="retry dataset">
-						<ReplayIcon color="warning" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
+						<ReplayRounded color="warning" sx={{color: props.run_state ? {color: "rgba(255, 255, 255, 0.3)"}: {}}} />
 					</ToggleButton>
 				</StyledToggleButtonGroup>
 

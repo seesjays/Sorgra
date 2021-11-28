@@ -23,7 +23,7 @@ function valuetext(value: number) {
 			return "Faster-er";
 
 		case Speed.FASTEST:
-			return "Fastest";
+			return "Ludicrous";
 	}
 	return "Intermediate";
 }
@@ -37,6 +37,8 @@ const SameLine = styled("div")(({ theme }) => ({
 
 type SortingSpeedBarProps = {
 	run_state: boolean;
+	speed: Speed;
+	lud_speeds: boolean;
 	handle_speed_change(event: Event, value: number | Array<number>): void;
 };
 export default function SortingSpeedBar(props: SortingSpeedBarProps) {
@@ -68,13 +70,13 @@ export default function SortingSpeedBar(props: SortingSpeedBarProps) {
 
 				<Slider
 					aria-label="Speed"
-					defaultValue={Speed.NORMAL}
+					value={props.speed}
 					valueLabelDisplay="auto"
 					getAriaValueText={valuetext}
 					valueLabelFormat={valuetext}
 					step={null}
 					marks={marks}
-					min={Speed.FASTEST}
+					min={props.lud_speeds ? Speed.FASTEST : Speed.FASTERER}
 					max={Speed.SLOW}
 					onChange={props.handle_speed_change}
 					disabled={props.run_state}
