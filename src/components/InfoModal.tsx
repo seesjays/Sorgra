@@ -41,7 +41,7 @@ export default function SorgraInfo({
     `;
 
 	const desc_e = `
-        Algorithm demonstrations are all natural by using a unique system that executes the actual sorting algorithm, encoding steps to a playable history.
+        Algorithm demonstrations are done all-naturally by utilizing a unique system that executes the actual sorting algorithm, encoding steps to a playable history.
         The algorithms are based upon pseudocode from various sources, including:
     `;
 

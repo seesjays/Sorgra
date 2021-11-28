@@ -134,7 +134,7 @@ export class SortingOperationFactory {
             ["Searching for a pair where left > right.", HIGHLIGHT_TYPE.SEEKING],
             ["Detected a pair of misordered values.", HIGHLIGHT_TYPE.DISCREPANCY],
             ["Swapped the misordered values.", HIGHLIGHT_TYPE.CORRECTED],
-            ["Bubble Sort: Complete", HIGHLIGHT_TYPE.CORRECTED],
+            ["Bubble Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
         ];
 
         let clear = false;
@@ -206,7 +206,7 @@ export class SortingOperationFactory {
             ["Swapping the swap index value with the lowest value.", HIGHLIGHT_TYPE.DISCREPANCY],
             ["Swap complete.", HIGHLIGHT_TYPE.CORRECTED],
             ["Didn't find any lower values, incrementing swap index.", HIGHLIGHT_TYPE.CORRECTED],
-            ["Selection Sort: Complete", HIGHLIGHT_TYPE.CORRECTED]
+            ["Selection Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED]
         ];
 
         sort_steps.push({ highlights: [], message: 0 });
@@ -334,7 +334,7 @@ export class SortingOperationFactory {
             ["Selection < left, swapping until selection >= left.", HIGHLIGHT_TYPE.DISCREPANCY],
             ["Swap complete.", HIGHLIGHT_TYPE.CORRECTED],
             ["Done moving selection, jumping to selection index pre-swapping(purple).", HIGHLIGHT_TYPE.SEEKING_ALT],
-            ["Insertion Sort: Complete", HIGHLIGHT_TYPE.CORRECTED]
+            ["Insertion Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED]
         ];
 
         sort_steps.push({ highlights: [], message: 0 });
