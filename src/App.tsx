@@ -2,8 +2,8 @@ import React from "react";
 import "./App.css";
 import AlgoSimPlayer from "./components/AlgoSimPlayer";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Container, CssBaseline, styled } from "@mui/material";
-import { Algorithms, SortingOperationFactory } from "./scripts/dataset";
+import { CssBaseline } from "@mui/material";
+import { SortingOperationFactory } from "./scripts/dataset";
 
 const theme = createTheme({
 	palette: {

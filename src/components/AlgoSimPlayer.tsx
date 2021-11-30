@@ -34,8 +34,6 @@ const TallStack = styled(Stack)(({ theme }) => ({
 	backgroundColor: theme.palette.background.default,
 }));
 
-const InfoIcon = styled(InfoOutlined)(({ theme }) => ({}));
-
 type AlgoSimProps = {
 	sorting_operation_factory: SortingOperationFactory;
 };
