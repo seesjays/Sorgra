@@ -37,6 +37,7 @@ const TallStack = styled(Stack)(({ theme }) => ({
 type AlgoSimProps = {
 	sorting_operation_factory: SortingOperationFactory;
 };
+
 type AlgoSimState = {
 	running: boolean;
 	complete: boolean;
