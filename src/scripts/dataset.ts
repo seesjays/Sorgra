@@ -7,7 +7,6 @@ type HighlightedIndex = {
     excl_indices?: number[];
 }
 
-
 type ColoredMessage = [string, HIGHLIGHT_TYPE];
 export type MessageSet = ColoredMessage[];
 

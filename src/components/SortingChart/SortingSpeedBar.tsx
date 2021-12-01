@@ -1,9 +1,10 @@
 import * as React from "react";
-import Slider from "@mui/material/Slider";
 import { Speed } from "../AlgoSimPlayer";
+
+import Slider from "@mui/material/Slider";
 import Box from "@mui/material/Box";
-import SpeedRoundedIcon from "@mui/icons-material/SpeedRounded";
 import { styled } from "@mui/material/styles";
+import SpeedRoundedIcon from "@mui/icons-material/SpeedRounded";
 
 function valuetext(value: number) {
 	switch (value) {

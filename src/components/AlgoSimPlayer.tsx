@@ -1,24 +1,26 @@
 import React from "react";
 import { SortingChartContainer } from "./SortingChart/SortingChartContainer";
 import { SortingChartButtonRow } from "./SortingChart/SortingChartButtonRow";
+import { SizeSwitch } from "./SortingChart/SizeSwitch";
+import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
+import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
+import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
+import SorgraInfo from "./InfoModal";
 
 import {
 	SortingOperationFactory,
 	SortingOperationController,
 	Algorithms,
 } from "../scripts/dataset";
-import { ChartData } from "chart.js";
-import { IconButton, SelectChangeEvent, Stack } from "@mui/material";
+import { HIGHLIGHT_TYPE } from "../scripts/colormap";
 
 import { styled } from "@mui/material/styles";
-import SortingChartMessageBox from "./SortingChart/SortingChartMessageBox";
-import SortingSpeedBar from "./SortingChart/SortingSpeedBar";
 import { Box } from "@mui/system";
-import { AlgoSwitch } from "./SortingChart/AlgoSwitch";
-import { HIGHLIGHT_TYPE } from "../scripts/colormap";
-import { SizeSwitch } from "./SortingChart/SizeSwitch";
-import SorgraInfo from "./InfoModal";
+import { IconButton, SelectChangeEvent, Stack } from "@mui/material";
+
 import { InfoOutlined } from "@mui/icons-material";
+
+import { ChartData } from "chart.js";
 
 export enum Speed {
 	SLOW = 2,

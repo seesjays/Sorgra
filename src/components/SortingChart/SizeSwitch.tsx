@@ -10,6 +10,7 @@ type SizeSwitchProps = {
 	current_size: number;
 	change_size(event: SelectChangeEvent<any>): void;
 };
+
 export function SizeSwitch({
 	min,
 	max,
@@ -18,7 +19,7 @@ export function SizeSwitch({
 }: SizeSwitchProps) {
 	const sizes = [];
 
-	for (let i = min; i <= max; i++) sizes.push(<MenuItem value={i}>{i}</MenuItem>);
+	for (let i = min; i <= max; i++) sizes.push(<MenuItem value={i} key={i}>{i}</MenuItem>);
 
 	return (
 		<FormControl variant="outlined" sx={{ minWidth: "20%" }}>

@@ -3,9 +3,9 @@ import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import { styled } from "@mui/material/styles";
 import { Paper, Typography } from "@mui/material";
-import { HIGHLIGHT_TYPE } from "../../scripts/colormap";
-import { ColorMap } from "../../scripts/colormap";
+
 import { MessageSet } from "../../scripts/dataset";
+import { ColorMap, HIGHLIGHT_TYPE } from "../../scripts/colormap";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
 	width: "90%",

@@ -76,11 +76,12 @@ export const SortingChartContainer = ({
 	chart_options.aspectRatio = chartsze;
 
 	// aux should always be below actual
-	const charts = chart_data.map((chart_data) => {
+	const charts = chart_data.map((chart_data, ind) => {
 		return (
 			<Bar
 				options={chart_options as CoreChartOptions<"bar">}
 				data={chart_data as ChartData<"bar", number[]>}
+				key={chart_data.datasets[0].label? chart_data.datasets[0].label : ind }
 			/>
 		);
 	});
