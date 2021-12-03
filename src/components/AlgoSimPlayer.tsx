@@ -300,7 +300,7 @@ class AlgoSimPlayer extends React.Component<AlgoSimProps, AlgoSimState> {
 					display="flex"
 					justifyContent="center"
 					alignItems={"center"}
-					padding={{ xs: "0.5em", md: "5%" }}
+					padding={{ xs: "0.5em", md: "5.8%" }}
 					width={{ xs: "100%", md: "60%" }}
 				>
 					<SortingChartContainer
