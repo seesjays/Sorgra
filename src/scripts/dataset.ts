@@ -5,7 +5,7 @@ type HighlightedIndex = {
     color: HIGHLIGHT_TYPE;
     indices: number[];
     excl_indices?: number[];
-}
+};
 
 type ColoredMessage = [string, HIGHLIGHT_TYPE];
 export type MessageSet = ColoredMessage[];
@@ -23,22 +23,25 @@ type SortStep = {
     changes?: StepChange[];
     aux_changes?: StepChange[];
     aux_swap?: boolean;
-}
-interface SortingOperation {
+};
+interface SortingOperation
+{
     name: string;
     steps: SortStep[];
     data_y: number[];
     data_y_aux?: number[];
     messages?: ColoredMessage[];
 }
-interface algorithm {
+interface algorithm
+{
     generate(): SortingOperation;
 }
 
-export type Algorithms = "Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort" | "Merge Sort";
+export type Algorithms = "Bubble Sort" | "Optimized Bubble Sort" | "Selection Sort" | "Insertion Sort" | "Quick Sort" | "Merge Sort";
 
 type AlgorithmData = Record<Algorithms, algorithm>;
-export class SortingOperationFactory {
+export class SortingOperationFactory
+{
     private data_set_size: number = 15;
 
     private data_x: number[];
@@ -48,7 +51,8 @@ export class SortingOperationFactory {
 
     private readonly algorithms: AlgorithmData;
 
-    constructor(dataset_size?: number) {
+    constructor(dataset_size?: number)
+    {
         if (dataset_size) this.data_set_size = dataset_size;
 
         this.data_x = [];
@@ -59,41 +63,48 @@ export class SortingOperationFactory {
 
         this.algorithms = {
             "Bubble Sort": { generate: () => this.generate_bubblesort_steps() },
+            "Optimized Bubble Sort": { generate: () => this.generate_optimized_bubblesort_steps() },
             "Selection Sort": { generate: () => this.generate_selectionsort_steps() },
             "Insertion Sort": { generate: () => this.generate_insertionsort_steps() },
             "Quick Sort": { generate: () => this.generate_quicksort_steps() },
             "Merge Sort": { generate: () => this.generate_mergesort_steps() }
-        }
+        };
     }
 
-    private gen_random_int_inclusive(min: number, max: number): number {
+    private gen_random_int_inclusive(min: number, max: number): number
+    {
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
     }
 
-    private generate_yvals(): number[] {
+    private generate_yvals(): number[]
+    {
         let outarr: number[] = [];
 
-        for (let i = 0; i < this.data_set_size; i++) {
+        for (let i = 0; i < this.data_set_size; i++)
+        {
             outarr.push(this.gen_random_int_inclusive(1, this.data_set_size + 1));
         }
 
         return outarr;
     }
 
-    private populate_datasets(): void {
+    private populate_datasets(): void
+    {
         this.data_x = Array.from({ length: this.data_set_size }, (_, i) => i);
         this.data_y = this.generate_yvals();
         this.aux_data_y = [...this.data_y];
         this.data_original = [...this.data_y];
     }
 
-    private return_to_original(): void {
+    private return_to_original(): void
+    {
         this.data_y = [...this.data_original];
     }
 
-    private swap(x: number, y: number): [StepChange, StepChange] {
+    private swap(x: number, y: number): [StepChange, StepChange]
+    {
         let temp = this.data_y[x];
 
         this.data_y[x] = this.data_y[y];
@@ -105,27 +116,32 @@ export class SortingOperationFactory {
         return [replace_x_with_y, replace_y_with_x_from_temp];
     }
 
-    private create_range(low: number, high: number, not_inclusive?: boolean): number[] {
+    private create_range(low: number, high: number, not_inclusive?: boolean): number[]
+    {
         if (low === high) return [low];
 
         let inds: number[] = [];
 
-        if (not_inclusive) {
-            for (let ind = low; ind < high; ind++) {
-                inds.push(ind)
+        if (not_inclusive)
+        {
+            for (let ind = low; ind < high; ind++)
+            {
+                inds.push(ind);
             }
 
             return inds;
         }
 
-        for (let ind = low; ind <= high; ind++) {
-            inds.push(ind)
+        for (let ind = low; ind <= high; ind++)
+        {
+            inds.push(ind);
         }
 
         return inds;
     }
 
-    private generate_bubblesort_steps(): SortingOperation {
+    private generate_bubblesort_steps(): SortingOperation
+    {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
         const messages: MessageSet = [
@@ -140,10 +156,13 @@ export class SortingOperationFactory {
 
         sort_steps.push({ highlights: [], message: 0 });
 
-        while (!clear) {
+        while (!clear)
+        {
             clear = true;
-            for (let i = 0; i < this.data_set_size - 1; i++) {
-                if (this.data_y[i] > this.data_y[i + 1]) {
+            for (let i = 0; i < this.data_set_size - 1; i++)
+            {
+                if (this.data_y[i] > this.data_y[i + 1])
+                {
                     clear = false;
 
                     step = {
@@ -168,11 +187,12 @@ export class SortingOperationFactory {
                         ],
                         changes: swapped,
                         message: 3,
-                    }
+                    };
 
                     sort_steps.push(step);
                 }
-                else {
+                else
+                {
                     step = {
                         highlights: [
                             {
@@ -181,7 +201,7 @@ export class SortingOperationFactory {
                             }
                         ],
                         message: 1,
-                    }
+                    };
 
                     sort_steps.push(step);
                 }
@@ -195,7 +215,130 @@ export class SortingOperationFactory {
         return { name: "Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    private generate_selectionsort_steps(): SortingOperation {
+    private generate_optimized_bubblesort_steps(): SortingOperation
+    {
+        let sort_steps: SortStep[] = [];
+        let step: SortStep;
+        let changes: [StepChange, StepChange];
+
+        const messages: MessageSet = [
+            ["Optimized Bubble Sort", HIGHLIGHT_TYPE.BASE],
+            ["Searching for a pair where left > right.", HIGHLIGHT_TYPE.SEEKING],
+            ["Detected a pair of misordered values.", HIGHLIGHT_TYPE.DISCREPANCY],
+            ["Swapped the misordered values.", HIGHLIGHT_TYPE.CORRECTED],
+            ["Lowered right end of search interval.", HIGHLIGHT_TYPE.DIM_CORRECTED],
+            ["Bubble Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
+        ];
+
+        let clear = false;
+
+        sort_steps.push({ highlights: [], message: 0 });
+
+        let swapLength = this.data_set_size;
+
+        do
+        {
+            clear = false;
+            for (let i = 1; i < swapLength; i++)
+            {
+                if (this.data_y[i - 1] > this.data_y[i])
+                {
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_CORRECTED,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(0, swapLength)
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.DISCREPANCY,
+                                indices: [i - 1, i]
+                            }
+                        ],
+                        message: 2
+                    };
+                    sort_steps.push(step);
+
+                    changes = this.swap(i - 1, i);
+                    clear = true;
+
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_CORRECTED,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(0, swapLength)
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.CORRECTED,
+                                indices: [i - 1, i]
+                            }
+                        ],
+                        changes: changes,
+                        message: 3,
+                    };
+                    sort_steps.push(step);
+                }
+                else
+                {
+                    step = {
+                        highlights: [
+                            {
+                                color: HIGHLIGHT_TYPE.DIM_CORRECTED,
+                                indices: [],
+                                excl_indices: []
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.BASE,
+                                indices: this.create_range(0, swapLength)
+                            },
+                            {
+                                color: HIGHLIGHT_TYPE.SEEKING,
+                                indices: [i - 1, i]
+                            }
+                        ],
+                        message: 1,
+                    };
+
+                    sort_steps.push(step);
+                }
+            }
+            swapLength -= 1;
+
+            step = {
+                highlights: [
+                    {
+                        color: HIGHLIGHT_TYPE.DIM_CORRECTED,
+                        indices: [],
+                        excl_indices: []
+                    },
+                    {
+                        color: HIGHLIGHT_TYPE.BASE,
+                        indices: this.create_range(0, swapLength)
+                    }
+                ],
+                message: 4
+            };
+            sort_steps.push(step);
+        } while (clear);
+
+        sort_steps.push({ highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: this.data_x }], message: messages.length - 1, });
+
+        this.return_to_original();
+
+        return { name: "Optimized Bubble Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
+    }
+
+    private generate_selectionsort_steps(): SortingOperation
+    {
         let sort_steps: SortStep[] = [];
         const messages: MessageSet = [
             ["Selection Sort", HIGHLIGHT_TYPE.BASE],
@@ -212,7 +355,8 @@ export class SortingOperationFactory {
 
         let data_length = this.data_x.length;
         let step: SortStep;
-        for (let i = 0; i < data_length; i++) {
+        for (let i = 0; i < data_length; i++)
+        {
             let j_min = i;
             step = {
                 highlights: [
@@ -225,8 +369,10 @@ export class SortingOperationFactory {
             };
             sort_steps.push(step);
 
-            for (let j = i + 1; j < data_length; j++) {
-                if (this.data_y[j] < this.data_y[j_min]) {
+            for (let j = i + 1; j < data_length; j++)
+            {
+                if (this.data_y[j] < this.data_y[j_min])
+                {
                     j_min = j;
 
                     step = {
@@ -244,7 +390,8 @@ export class SortingOperationFactory {
                     };
                     sort_steps.push(step);
                 }
-                else {
+                else
+                {
                     step = {
                         highlights: [
                             {
@@ -266,7 +413,8 @@ export class SortingOperationFactory {
                 }
             }
 
-            if (j_min !== i) {
+            if (j_min !== i)
+            {
                 step = {
                     highlights: [
                         {
@@ -275,7 +423,7 @@ export class SortingOperationFactory {
                         }
                     ],
                     message: 4
-                }
+                };
                 sort_steps.push(step);
 
                 let swapped = this.swap(j_min, i);
@@ -289,10 +437,11 @@ export class SortingOperationFactory {
                     ],
                     changes: swapped,
                     message: 5
-                }
+                };
                 sort_steps.push(step);
             }
-            else {
+            else
+            {
                 step = {
                     highlights: [
                         {
@@ -301,7 +450,7 @@ export class SortingOperationFactory {
                         }
                     ],
                     message: 6
-                }
+                };
                 sort_steps.push(step);
             }
         }
@@ -315,7 +464,7 @@ export class SortingOperationFactory {
                 }
             ],
             message: messages.length - 1
-        }
+        };
         sort_steps.push(step);
 
         this.return_to_original();
@@ -323,7 +472,8 @@ export class SortingOperationFactory {
         return { name: "Selection Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    private generate_insertionsort_steps(): SortingOperation {
+    private generate_insertionsort_steps(): SortingOperation
+    {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
         const messages: MessageSet = [
@@ -349,7 +499,8 @@ export class SortingOperationFactory {
         };
         sort_steps.push(step);
 
-        for (let i = 1; i < this.data_y.length; i++) {
+        for (let i = 1; i < this.data_y.length; i++)
+        {
             let j = i;
 
             step = {
@@ -367,7 +518,8 @@ export class SortingOperationFactory {
             };
             sort_steps.push(step);
 
-            while (j > 0 && this.data_y[j - 1] > this.data_y[j]) {
+            while (j > 0 && this.data_y[j - 1] > this.data_y[j])
+            {
                 step = {
                     highlights: [
                         {
@@ -425,7 +577,7 @@ export class SortingOperationFactory {
                     }
                 ],
                 message: 5
-            }
+            };
             sort_steps.push(step);
         }
 
@@ -438,14 +590,15 @@ export class SortingOperationFactory {
                 }
             ],
             message: 6
-        }
+        };
         sort_steps.push(step);
         this.return_to_original();
 
         return { name: "Insertion Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    private generate_quicksort_steps(): SortingOperation {
+    private generate_quicksort_steps(): SortingOperation
+    {
         let sort_steps: SortStep[] = [];
         let step: SortStep;
 
@@ -467,7 +620,8 @@ export class SortingOperationFactory {
 
         sort_steps.push({ highlights: [], message: 0 });
 
-        const partition = (start: number, end: number): number => {
+        const partition = (start: number, end: number): number =>
+        {
             // highlight
             let curr_part = this.create_range(start, end);
 
@@ -476,8 +630,10 @@ export class SortingOperationFactory {
 
             let highfound = false;
 
-            for (let right_ind = start; right_ind < end; right_ind++) {
-                if (this.data_y[right_ind] <= pivot_value) {
+            for (let right_ind = start; right_ind < end; right_ind++)
+            {
+                if (this.data_y[right_ind] <= pivot_value)
+                {
                     // found value < pivot, increment both left and right ind
 
                     step = {
@@ -572,10 +728,13 @@ export class SortingOperationFactory {
                     partition_index++;
                     highfound = false;
                 }
-                else {
+                else
+                {
                     // found value > pivot, leave left ind(partition ind)
-                    if (highfound) {
-                        if (partition_index !== right_ind) {
+                    if (highfound)
+                    {
+                        if (partition_index !== right_ind)
+                        {
                             step = {
                                 highlights:
                                     [
@@ -606,7 +765,8 @@ export class SortingOperationFactory {
                             sort_steps.push(step);
                         }
                     }
-                    else {
+                    else
+                    {
                         highfound = true;
 
                         step = {
@@ -726,10 +886,12 @@ export class SortingOperationFactory {
             sort_steps.push(step);
 
             return partition_index;
-        }
+        };
 
-        const quicksort = (start: number, end: number, prevpiv: number): void => {
-            if (start < end) {
+        const quicksort = (start: number, end: number, prevpiv: number): void =>
+        {
+            if (start < end)
+            {
                 const partition_index: number = partition(start, end);
 
                 let left = this.create_range(start, partition_index - 1);
@@ -814,7 +976,8 @@ export class SortingOperationFactory {
 
                 quicksort(partition_index + 1, end, partition_index);
             }
-            else {
+            else
+            {
                 step = {
                     highlights:
                         [
@@ -825,18 +988,19 @@ export class SortingOperationFactory {
                 };
                 sort_steps.push(step);
             }
-        }
+        };
 
         quicksort(0, this.data_y.length - 1, this.data_y.length - 1);
 
-        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: messages.length - 1 }
+        step = { highlights: [{ color: HIGHLIGHT_TYPE.CORRECTED, indices: [], excl_indices: [] }], message: messages.length - 1 };
         sort_steps.push(step);
         this.return_to_original();
 
         return { name: "Quick Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y] };
     }
 
-    private generate_mergesort_steps(): SortingOperation {
+    private generate_mergesort_steps(): SortingOperation
+    {
         // A clear benefit over ELPath, I've learned from the quicksort implementation,
         // is that recursivity is much easier to use (still hard to explain, without a second chart...)
         // What a convenience from not using generators! I can make things truly "recursive" because
@@ -866,7 +1030,8 @@ export class SortingOperationFactory {
                 ["Merge Sort: Complete.", HIGHLIGHT_TYPE.CORRECTED],
             ];
 
-        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void => {
+        const merge_elements = (arrayone: number[], arraytwo: number[], start_ind: number, middle_ind: number, end_ind: number, call_layer: number): void =>
+        {
             call_layer++;
 
             let swapped_arrays = false;
@@ -875,7 +1040,8 @@ export class SortingOperationFactory {
             let i = start_ind;
             let j = middle_ind;
 
-            for (let current_el = start_ind; current_el < end_ind; current_el++) {
+            for (let current_el = start_ind; current_el < end_ind; current_el++)
+            {
                 step = {
                     highlights: [
                         {
@@ -909,10 +1075,11 @@ export class SortingOperationFactory {
                     ],
                     aux_swap: swapped_arrays,
                     message: 5
-                }
+                };
                 sort_steps.push(step);
 
-                if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j])) {
+                if (i < middle_ind && (j >= end_ind || arrayone[i] <= arrayone[j]))
+                {
                     let sel_msg = 6;
                     if (j >= end_ind) sel_msg = 7;
 
@@ -949,7 +1116,7 @@ export class SortingOperationFactory {
                         ],
                         aux_swap: swapped_arrays,
                         message: sel_msg
-                    }
+                    };
                     sort_steps.push(step);
 
                     arraytwo[current_el] = arrayone[i];
@@ -991,10 +1158,11 @@ export class SortingOperationFactory {
                         changes: [set_real_from_work_arr],
                         aux_swap: swapped_arrays,
                         message: 10
-                    }
+                    };
                     sort_steps.push(step);
                 }
-                else {
+                else
+                {
                     let sel_msg = 8;
                     if (i >= middle_ind) sel_msg = 9;
 
@@ -1031,7 +1199,7 @@ export class SortingOperationFactory {
                         ],
                         aux_swap: swapped_arrays,
                         message: sel_msg
-                    }
+                    };
                     sort_steps.push(step);
 
                     arraytwo[current_el] = arrayone[j];
@@ -1073,19 +1241,21 @@ export class SortingOperationFactory {
                         changes: [set_real_from_work_arr],
                         aux_swap: swapped_arrays,
                         message: 11
-                    }
+                    };
                     sort_steps.push(step);
                 }
             }
-        }
+        };
 
-        const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void => {
+        const split_elements = (arrayone: number[], arraytwo: number[], start_ind: number, end_ind: number, call_layer: number): void =>
+        {
             call_layer++;
 
             let swapped_arrays = false;
             if (arraytwo === this.aux_data_y) swapped_arrays = true;
 
-            if (end_ind - start_ind <= 1) {
+            if (end_ind - start_ind <= 1)
+            {
                 // base case
                 step = {
                     highlights: [
@@ -1101,7 +1271,7 @@ export class SortingOperationFactory {
                     ],
                     aux_swap: swapped_arrays,
                     message: 3
-                }
+                };
 
                 sort_steps.push(step);
                 return;
@@ -1127,7 +1297,7 @@ export class SortingOperationFactory {
                 ],
                 aux_swap: swapped_arrays,
                 message: 1
-            }
+            };
             sort_steps.push(step);
 
             split_elements(arraytwo, arrayone, start_ind, middle_ind, call_layer);
@@ -1150,7 +1320,7 @@ export class SortingOperationFactory {
                 ],
                 aux_swap: swapped_arrays,
                 message: 2
-            }
+            };
             sort_steps.push(step);
 
             split_elements(arraytwo, arrayone, middle_ind, end_ind, call_layer);
@@ -1169,7 +1339,7 @@ export class SortingOperationFactory {
                 ],
                 aux_swap: swapped_arrays,
                 message: 4
-            }
+            };
             sort_steps.push(step);
 
             merge_elements(arrayone, arraytwo, start_ind, middle_ind, end_ind, call_layer);
@@ -1188,14 +1358,15 @@ export class SortingOperationFactory {
                 ],
                 aux_swap: swapped_arrays,
                 message: 12
-            }
+            };
             sort_steps.push(step);
-        }
+        };
 
-        const mergesort_topdown = (itemarray: number[]): void => {
+        const mergesort_topdown = (itemarray: number[]): void =>
+        {
             let work_array = this.aux_data_y;
             split_elements(itemarray, work_array, 0, work_array.length, 0);
-        }
+        };
 
         sort_steps.push({ highlights: [], message: 0 });
 
@@ -1208,26 +1379,31 @@ export class SortingOperationFactory {
         return { name: "Merge Sort", steps: sort_steps, messages: messages, data_y: [...this.data_y], data_y_aux: [...this.data_y] };
     }
 
-    private randomize_y(): void {
+    private randomize_y(): void
+    {
         this.data_y = this.generate_yvals();
         this.aux_data_y = [...this.data_y];
         this.data_original = [...this.data_y];
     }
 
-    public generate_new_operation(alg: Algorithms): SortingOperation {
+    public generate_new_operation(alg: Algorithms): SortingOperation
+    {
         this.randomize_y();
 
         return this.algorithms[alg].generate();
     }
 
-    public regenerate_operation(alg: Algorithms): SortingOperation {
+    public regenerate_operation(alg: Algorithms): SortingOperation
+    {
         this.return_to_original();
 
         return this.algorithms[alg].generate();
     }
 
-    public set_dataset_size(size: number): void {
-        if (size < 5 || size > 50) {
+    public set_dataset_size(size: number): void
+    {
+        if (size < 5 || size > 50)
+        {
             return;
         }
 
@@ -1236,7 +1412,8 @@ export class SortingOperationFactory {
     }
 }
 
-export class SortingOperationController {
+export class SortingOperationController
+{
     private operation: SortingOperation;
     private highlight_cols: ColorMapping;
     private data_highlights: string[]; // Highlight diffing
@@ -1256,16 +1433,19 @@ export class SortingOperationController {
     public complete: boolean = false;
 
 
-    constructor(operation: SortingOperation) {
+    constructor(operation: SortingOperation)
+    {
         this.operation = operation;
         this.name = operation.name;
 
         this.step_counter = 0;
 
-        if (operation.messages) {
+        if (operation.messages)
+        {
             this.messages = operation.messages;
         }
-        else {
+        else
+        {
             this.messages = [["Undocumented Step", HIGHLIGHT_TYPE.DIM_BASE]];
         }
 
@@ -1279,8 +1459,10 @@ export class SortingOperationController {
         this.data_y_original = [...operation.data_y];
     }
 
-    public get_chart_dataset(): ChartData[] {
-        if (this.operation.data_y_aux) {
+    public get_chart_dataset(): ChartData[]
+    {
+        if (this.operation.data_y_aux)
+        {
             return [{
                 labels: this.data_x,
                 datasets: [
@@ -1306,7 +1488,8 @@ export class SortingOperationController {
                 ],
             }];
         }
-        else {
+        else
+        {
             return [{
                 labels: this.data_x,
                 datasets: [
@@ -1322,29 +1505,38 @@ export class SortingOperationController {
         }
     };
 
-    public get_max_y(): number {
+    public get_max_y(): number
+    {
         return Math.max(...this.data_y_original);
     }
 
-    private highlight(highlights: HighlightedIndex[], target: string[], keep_prev?: boolean): void {
-        if (!keep_prev) {
+    private highlight(highlights: HighlightedIndex[], target: string[], keep_prev?: boolean): void
+    {
+        if (!keep_prev)
+        {
             target.fill(this.highlight_cols[HIGHLIGHT_TYPE.BASE]);
         }
 
-        for (let highlight of highlights) {
-            if (highlight.excl_indices) {
+        for (let highlight of highlights)
+        {
+            if (highlight.excl_indices)
+            {
                 let selected_color = this.highlight_cols[highlight.color];
 
-                for (let i = 0; i < this.data_x.length; i++) {
-                    if (!highlight.excl_indices.includes(i)) {
+                for (let i = 0; i < this.data_x.length; i++)
+                {
+                    if (!highlight.excl_indices.includes(i))
+                    {
                         target[i] = selected_color;
                     }
                 }
             }
-            else {
+            else
+            {
                 let selected_color = this.highlight_cols[highlight.color];
 
-                for (let indice of highlight.indices) {
+                for (let indice of highlight.indices)
+                {
                     target[indice] = selected_color;
                 }
             }
@@ -1353,46 +1545,56 @@ export class SortingOperationController {
         return;
     }
 
-    private informed_highlight(sortingstep: SortStep): void {
+    private informed_highlight(sortingstep: SortStep): void
+    {
         let default_target = sortingstep.aux_swap ? this.aux_highlights : this.data_highlights;
         let aux_target = sortingstep.aux_swap ? this.data_highlights : this.aux_highlights;
 
         this.highlight(sortingstep.highlights, default_target, sortingstep.keep_prev_highlight);
 
-        if (sortingstep.aux_highlights) {
+        if (sortingstep.aux_highlights)
+        {
             this.highlight(sortingstep.aux_highlights, aux_target, sortingstep.keep_prev_highlight);
         }
-        else {
+        else
+        {
             this.highlight([{ color: HIGHLIGHT_TYPE.BASE, indices: [], excl_indices: [] }], aux_target, sortingstep.keep_prev_highlight);
         }
 
         return;
     }
 
-    private enact_step_changes(sortingstep: SortStep): void {
+    private enact_step_changes(sortingstep: SortStep): void
+    {
         let changes = sortingstep.aux_swap ? sortingstep.aux_changes : sortingstep.changes;
         let aux_changes = sortingstep.aux_swap ? sortingstep.changes : sortingstep.aux_changes;
 
-        if (changes) {
-            for (let change of changes) {
+        if (changes)
+        {
+            for (let change of changes)
+            {
                 this.operation.data_y[change[0]] = change[1];
             }
         }
 
-        if (aux_changes && this.operation.data_y_aux) {
-            for (let change of aux_changes) {
+        if (aux_changes && this.operation.data_y_aux)
+        {
+            for (let change of aux_changes)
+            {
                 this.operation.data_y_aux[change[0]] = change[1];
             }
         }
     }
 
-    private update_message_history(sortingstep: SortStep): void {
+    private update_message_history(sortingstep: SortStep): void
+    {
         let color: HIGHLIGHT_TYPE = this.messages[sortingstep.message][1];
 
         this.message_history[0].unshift(sortingstep.message);
         this.message_history[1].unshift(color);
 
-        if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len) {
+        if (this.message_history[0].length > this.message_history_len || this.message_history[1].length > this.message_history_len)
+        {
             this.message_history[0].pop();
             this.message_history[1].pop();
         }
@@ -1400,12 +1602,15 @@ export class SortingOperationController {
         return;
     }
 
-    private reset_message_history(): void {
+    private reset_message_history(): void
+    {
         this.message_history = [[0], [HIGHLIGHT_TYPE.BASE]];
     }
 
-    public next_step(): ChartData[] {
-        if (!this.complete) {
+    public next_step(): ChartData[]
+    {
+        if (!this.complete)
+        {
             this.step_counter += 1;
             this.informed_highlight(this.operation.steps[this.step_counter]);
 
@@ -1413,7 +1618,8 @@ export class SortingOperationController {
             this.update_message_history(this.operation.steps[this.step_counter]);
         }
 
-        if (this.step_counter === this.operation.steps.length - 1) {
+        if (this.step_counter === this.operation.steps.length - 1)
+        {
             this.complete = true;
             return this.get_chart_dataset();
         }
@@ -1421,7 +1627,8 @@ export class SortingOperationController {
         return this.get_chart_dataset();
     }
 
-    public retry(): ChartData[] {
+    public retry(): ChartData[]
+    {
         this.complete = false;
         this.step_counter = 0;
 
